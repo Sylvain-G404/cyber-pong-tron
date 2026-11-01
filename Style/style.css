@@ -1,0 +1,25 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: #05050a; /* Un noir bleuté très sombre style Cyberpunk */
+  color: #ffffff;
+  font-family: "Courier New", Courier, monospace; /* Style rétro-informatique */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  overflow: hidden; /* Empêche les barres de défilement */
+}
+
+#gameCanvas {
+  background-color: #000000;
+  border: 3px solid #00f0ff; /* Lueur néon Cyan par défaut */
+  box-shadow:
+    0 0 15px #00f0ff,
+    inset 0 0 15px #00f0ff; /* Effet de lueur néon */
+  display: block;
+}
