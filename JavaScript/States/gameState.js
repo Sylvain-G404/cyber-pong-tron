@@ -3,6 +3,7 @@
 import { Board } from '../Entities/board.js';
 import { Paddle } from '../Entities/paddle.js';
 import { Ball } from '../Entities/ball.js';
+import { CountdownView } from '../Entities/countdownView.js';
 import { playBeep, playAdvancedBeep, startDangerAlarm, stopDangerAlarm, stopAmbientMusic, stopMenuMusic } from '../Engine/sound.js';
 
 export class GameState {
@@ -17,7 +18,7 @@ export class GameState {
         this.wallDangerJoueur = false; 
         this.wallDangerIA = false;     
 
-        this.countdown = 3;
+        this.countdownAnimation = null;
 
         // --- PROPRIÉTÉS DE DIFFICULTÉ IA DYNAMIQUES ---
         this.aiSpeed = 400;
@@ -32,7 +33,7 @@ export class GameState {
 
         this.wallDangerJoueur = false;
         this.wallDangerIA = false;
-        this.countdown = 3;
+        this.countdownAnimation = new CountdownView(canvas.width, canvas.height, this.stateManager.currentDifficulty);
         this.aiTargetPos = undefined;
 
         // 1. Détermination de la clé en minuscules
@@ -119,17 +120,25 @@ export class GameState {
             }
         }
 
-        // 3. Gestion du décompte de départ et de la balle
-        if (this.countdown > 0) {
-            const oldCeil = Math.ceil(this.countdown);
-            this.countdown -= deltaTime;
-            const newCeil = Math.ceil(this.countdown);
+        // --- GESTION DU DÉCOMPTE V2 (ANIMATION ISOLÉE) ---
+        if (this.countdownAnimation && !this.countdownAnimation.isFinished) {
 
-            if (oldCeil !== newCeil && newCeil >= 0) {
-                if (newCeil === 0) {
-                    playAdvancedBeep(880, 0.3, 'sawtooth'); // GO !
+            // On sauvegarde le temps avant et après l'update pour détecter les bips à la seconde exacte
+            const prevTimer = this.countdownAnimation.timer;
+            this.countdownAnimation.update(deltaTime);
+            const currentTimer = this.countdownAnimation.timer;
+
+            // Détection du passage des secondes pour les effets sonores d'arcade
+            const prevFloor = Math.ceil(prevTimer);
+            const currentFloor = Math.ceil(currentTimer);
+
+            if (prevFloor !== currentFloor && currentFloor >= 0) {
+                if (currentFloor === 0) {
+                    playAdvancedBeep(880, 0.3, 'sawtooth'); // Le bip strident du FIGHT !
+                } else if (currentFloor <= 3) {
+                    playBeep(300, 0.08); // Les bips des chiffres 3, 2, 1
                 } else {
-                    playBeep(300, 0.08); // 3, 2, 1
+                    playBeep(200, 0.05); // Petit clic mécanique pour l'annonce MODE / HARDCORE
                 }
             }
         } else if (this.ball && this.board) {
@@ -258,14 +267,9 @@ export class GameState {
         if (this.paddleRightOrBottom) this.paddleRightOrBottom.render(ctx);
         if (this.ball) this.ball.render(ctx);
 
-        // 4. Dessin du compte à rebours de départ
-        if (this.countdown > 0) {
-            ctx.fillStyle = "#ff6600";
-            ctx.font = "bold 60px 'Courier New'";
-            ctx.shadowBlur = 20;
-            ctx.shadowColor = "#ff6600";
-            ctx.fillText(Math.ceil(this.countdown), canvas.width / 2, canvas.height / 2);
-            ctx.shadowBlur = 0;
+        // 4. Dessin de l'animation de démarrage cyberpunk
+        if (this.countdownAnimation && !this.countdownAnimation.isFinished) {
+            this.countdownAnimation.draw(ctx);
         }
     }
 
