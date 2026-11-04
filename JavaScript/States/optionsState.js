@@ -15,7 +15,7 @@ export class OptionsState {
     enter() { window.addEventListener('keydown', this.handleKeyDown); }
     exit() { window.removeEventListener('keydown', this.handleKeyDown); }
 
-        handleKeyDown(event) {
+    handleKeyDown(event) {
         switch (event.key) {
             case 'ArrowUp':
             case 'z':
@@ -54,40 +54,44 @@ export class OptionsState {
 
     update(deltaTime) {}
 
-        draw(ctx, canvas) {
+    draw(ctx, canvas) {
         // 1. Fond noir profond
         ctx.fillStyle = '#000000';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+        // --- CALCULS DE TAILLES TYPOGRAPHIQUES AUTOMATIQUES AAA ---
+        const titleSize = Math.floor(canvas.height * 0.075); // ~75px pour 1000 de haut
+        const optionSize = Math.floor(canvas.height * 0.04);  // ~40px
+        const helpSize = Math.floor(canvas.height * 0.022);   // ~22px
+        const spacing = Math.floor(canvas.height * 0.09);     // ~90px
+
         // 2. Titre de l'écran
         ctx.fillStyle = '#00f3ff';
-        ctx.font = "28px 'Courier New', Courier, monospace";
+        ctx.font = `bold ${titleSize}px 'Courier New', Courier, monospace`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText('DIFFICULTÉ IA', canvas.width / 2, canvas.height / 2 - 80);
+        ctx.fillText('DIFFICULTÉ IA', canvas.width / 2, canvas.height / 2 - (spacing * 1.2));
 
         // 3. Rendu dynamique des niveaux de difficulté
-        const startY = canvas.height / 2 + 20;
-        const spacing = 45;
+        const startY = canvas.height / 2 + (spacing * 0.3);
 
         this.difficulties.forEach((diff, index) => {
             if (index === this.selectedIndex) {
                 // Style Difficultée sélectionnée (Blanc brillant avec indicateur)
                 ctx.fillStyle = '#ffffff';
-                ctx.font = "bold 20px 'Courier New', Courier, monospace";
+                ctx.font = `bold ${optionSize}px 'Courier New', Courier, monospace`;
                 ctx.fillText(`> ${diff} <`, canvas.width / 2, startY + (index * spacing));
             } else {
                 // Style Difficultées inactives (Cyan éteint)
                 ctx.fillStyle = '#558899';
-                ctx.font = "20px 'Courier New', Courier, monospace";
+                ctx.font = `${optionSize}px 'Courier New', Courier, monospace`;
                 ctx.fillText(diff, canvas.width / 2, startY + (index * spacing));
             }
         });
 
         // 4. Petit message d'aide en bas
         ctx.fillStyle = '#336677';
-        ctx.font = "14px 'Courier New', Courier, monospace";
-        ctx.fillText('ENTRÉE pour valider - ÉCHAP pour quitter', canvas.width / 2, canvas.height - 60);
+        ctx.font = `${helpSize}px 'Courier New', Courier, monospace`;
+        ctx.fillText('ENTRÉE pour valider - ÉCHAP pour quitter', canvas.width / 2, canvas.height - (canvas.height * 0.06));
     }
-
 }

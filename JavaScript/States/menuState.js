@@ -74,29 +74,34 @@ export class MenuState {
         ctx.fillStyle = '#000000';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+        // --- CALCULS DE TAILLES TYPOGRAPHIQUES AUTOMATIQUES AAA ---
+        const titleSize = Math.floor(canvas.height * 0.075); // 7.5% de la hauteur (Ex: 75px en résolution 1000)
+        const optionSize = Math.floor(canvas.height * 0.04); // 4% de la hauteur (Ex: 40px en résolution 1000)
+        const spacing = Math.floor(canvas.height * 0.09);    // 9% d'espacement (Ex: 90px)
+
         // 2. Titre du jeu principal
         ctx.fillStyle = '#00f3ff';
-        ctx.font = "32px 'Courier New', Courier, monospace";
+        ctx.font = `bold ${titleSize}px 'Courier New', Courier, monospace`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText('CYBER PONG TRON', canvas.width / 2, canvas.height / 2 - 80);
+        ctx.fillText('CYBER PONG TRON', canvas.width / 2, canvas.height / 2 - (spacing * 1.2));
 
         // 3. Rendu dynamique des options du menu
-        const startY = canvas.height / 2 + 20;
-        const spacing = 45;
+        const startY = canvas.height / 2 + (spacing * 0.3);
 
         this.options.forEach((option, index) => {
             if (index === this.selectedIndex) {
-                // Style Option Sélectionnée
+                // Style Option Sélectionnée (Blanc brillant avec curseurs)
                 ctx.fillStyle = '#ffffff';
-                ctx.font = "bold 20px 'Courier New', Courier, monospace";
+                ctx.font = `bold ${optionSize}px 'Courier New', Courier, monospace`;
                 ctx.fillText(`> ${option} <`, canvas.width / 2, startY + (index * spacing));
             } else {
-                // Style Options Inactives
+                // Style Options Inactives (Cyan éteint/grisé)
                 ctx.fillStyle = '#558899';
-                ctx.font = "20px 'Courier New', Courier, monospace";
+                ctx.font = `${optionSize}px 'Courier New', Courier, monospace`;
                 ctx.fillText(option, canvas.width / 2, startY + (index * spacing));
             }
         });
     }
+
 }

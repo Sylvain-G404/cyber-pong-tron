@@ -5,9 +5,6 @@ import { Paddle } from '../Entities/paddle.js';
 import { Ball } from '../Entities/ball.js';
 import { playBeep, playAdvancedBeep, startDangerAlarm, stopDangerAlarm, stopAmbientMusic, stopMenuMusic } from '../Engine/sound.js';
 
-
-
-
 export class GameState {
     constructor(stateManager, input) {
         this.stateManager = stateManager;
@@ -16,347 +13,258 @@ export class GameState {
         this.paddleLeftOrTop = null;
         this.paddleRightOrBottom = null;
 
-        // --- NOUVEAU SYSTÈME DESIGN : MURS DE DANGER TRON ---
-        this.wallDangerJoueur = false; // Si vrai, le mur du joueur reste rouge (Alerte Game Over)
-        this.wallDangerIA = false;     // Si vrai, le mur de l'IA reste rouge
+        // --- MURS DE DANGER TRON UNIVERSELS ---
+        this.wallDangerJoueur = false; 
+        this.wallDangerIA = false;     
 
-        // Le compte à rebours de départ
         this.countdown = 3;
 
         // --- PROPRIÉTÉS DE DIFFICULTÉ IA DYNAMIQUES ---
         this.aiSpeed = 400;
         this.aiReactionTimer = 0;
-        this.aiTargetY = 0; // Contient la cible calculée (avec marge d'erreur)
+        this.aiTargetPos = undefined; 
     }
 
     async enter() {
         console.log("Le match commence !");
         stopMenuMusic();
         const canvas = this.stateManager.canvas;
-    
+
         this.wallDangerJoueur = false;
         this.wallDangerIA = false;
         this.countdown = 3;
+        this.aiTargetPos = undefined;
 
-        // 1. Détermination de la clé en minuscules ('facile', 'moyen', 'difficile')
+        // 1. Détermination de la clé en minuscules
         const diffKey = (this.stateManager.currentDifficulty || 'Moyen').toLowerCase();
 
-        // 2. Chargement AAA du fichier de configuration JSON
+        // 2. Chargement de la configuration de l'IA
         try {
             const response = await fetch('Data/aiConfig.json');
             const config = await response.json();
             const aiSettings = config[diffKey] || config['moyen'];
 
-            // On injecte les paramètres du JSON dans nos variables
             this.aiSpeed = aiSettings.speed;
-            this.aiReactionInterval = aiSettings.reactionTime; // ex: 0.15s
-            this.aiErrorMargin = aiSettings.errorMargin;       // ex: 40px
-            
+            this.aiReactionInterval = aiSettings.reactionTime; 
+            this.aiErrorMargin = aiSettings.errorMargin;       
+
             console.log(`[IA CONFIG] Mode ${diffKey} appliqué : Vitesse=${this.aiSpeed}, Réaction=${this.aiErrorMargin}px`);
         } catch (error) {
             console.error("Impossible de charger la configuration de l'IA, valeurs de secours appliquées :", error);
-            // Valeurs de secours au cas où le fichier JSON est inaccessible
             this.aiSpeed = 400;
             this.aiReactionInterval = 0.15;
             this.aiErrorMargin = 40;
         }
 
+        // 3. Initialisation des entités (Arène paysage)
         this.board = new Board(canvas);
         this.ball = new Ball(canvas.width, canvas.height);
 
-        if (this.board.isVertical()) {
-            const pWidth = canvas.width * 0.2;
-            const pHeight = 15;
-            
-            this.paddleLeftOrTop = new Paddle(
-                'top', 
-                canvas.width / 2 - pWidth / 2,
-                20, 
-                pWidth, pHeight, "#00ff66"
-            );
-            this.paddleRightOrBottom = new Paddle(
-                'bottom', 
-                canvas.width / 2 - pWidth / 2,
-                canvas.height - 20 - pHeight,
-                pWidth, pHeight, "#ff0077"
-            );
-        } else {
-            const pWidth = 15;
-            const pHeight = canvas.height * 0.2;
-            
-            this.paddleLeftOrTop = new Paddle(
-                'left', 
-                20, 
-                canvas.height / 2 - pHeight / 2,
-                pWidth, pHeight, "#00ff66"
-            );
-            this.paddleRightOrBottom = new Paddle(
-                'right', 
-                canvas.width - 20 - pWidth, 
-                canvas.height / 2 - pHeight / 2,
-                pWidth, pHeight, "#ff0077"
-            );
-        }
+        const pWidth = 15;
+        const pHeight = canvas.height * 0.2; 
+        
+        this.paddleLeftOrTop = new Paddle(
+            'left', 
+            20, 
+            canvas.height / 2 - pHeight / 2,
+            pWidth, pHeight, "#00ff66",
+            canvas.width, canvas.height
+        );
+        this.paddleRightOrBottom = new Paddle(
+            'right', 
+            canvas.width - 20 - pWidth, 
+            canvas.height / 2 - pHeight / 2,
+            pWidth, pHeight, "#ff0077",
+            canvas.width, canvas.height
+        );
     }
 
     update(deltaTime) {
         const canvas = this.stateManager.canvas;
 
-        // 1. Mise à jour de ton contrôleur de Raquette (Joueur 1)
+        // 1. Mise à jour de la raquette Joueur (Gauche)
         if (this.paddleLeftOrTop) {
             this.paddleLeftOrTop.update(deltaTime, this.input, canvas.width, canvas.height);
         }
 
-                // 2. LE PILOTAGE AUTOMATIQUE DE L'IA ADAPTATIF AAA
+        // 2. LE PILOTAGE AUTOMATIQUE DE L'IA ADAPTATIF UNIVERSEL (PC/PAYSAGE)
         if (this.paddleRightOrBottom && this.ball) {
-            const isVertical = this.board.isVertical();
-
-            // --- A. GESTION DU TEMPS DE RÉACTION ET DU CALCUL DE LA CIBLE ---
             if (!this.aiReactionTimer) this.aiReactionTimer = 0;
             this.aiReactionTimer += deltaTime;
 
-            // Si le temps de réaction est écoulé, l'IA "regarde" la balle et met à jour sa cible
+            // Si le temps de réaction est écoulé, l'IA recalcule sa cible sur l'axe Y
             if (this.aiReactionTimer >= this.aiReactionInterval) {
-                this.aiReactionTimer = 0; // On réinitialise le chrono
-
-                // Calcul d'une erreur aléatoire (entre -marge et +marge)
+                this.aiReactionTimer = 0; 
                 const error = (Math.random() - 0.5) * 2 * this.aiErrorMargin;
-
-                if (isVertical) {
-                    this.aiTargetPos = this.ball.x + error; // Cible sur l'axe X (Mobile)
-                } else {
-                    this.aiTargetPos = this.ball.y + error; // Cible sur l'axe Y (PC)
-                }
+                this.aiTargetPos = this.ball.y + error; 
             }
 
-            // Si aucune cible n'est encore définie au tout début, on prend le centre de la balle
             if (this.aiTargetPos === undefined) {
-                this.aiTargetPos = isVertical ? this.ball.x : this.ball.y;
+                this.aiTargetPos = this.ball.y;
             }
 
-            // --- B. DÉPLACEMENT DE LA RAQUETTE VERS LA CIBLE ---
-            if (isVertical) {
-                let paddleCenter = this.paddleRightOrBottom.x + this.paddleRightOrBottom.width / 2;
+            // Déplacement fluide de la raquette IA vers l'objectif Y
+            let paddleCenter = this.paddleRightOrBottom.y + this.paddleRightOrBottom.height / 2;
 
-                // Déplacement fluide vers la position cible calculée
-                if (this.aiTargetPos < paddleCenter - 5) {
-                    this.paddleRightOrBottom.x -= this.aiSpeed * deltaTime;
-                } else if (this.aiTargetPos > paddleCenter + 5) {
-                    this.paddleRightOrBottom.x += this.aiSpeed * deltaTime;
-                }
+            if (this.aiTargetPos < paddleCenter - 5) {
+                this.paddleRightOrBottom.y -= this.aiSpeed * deltaTime;
+            } else if (this.aiTargetPos > paddleCenter + 5) {
+                this.paddleRightOrBottom.y += this.aiSpeed * deltaTime;
+            }
 
-                // Sécurité des bords du Canvas
-                if (this.paddleRightOrBottom.x < 0) this.paddleRightOrBottom.x = 0;
-                if (this.paddleRightOrBottom.x + this.paddleRightOrBottom.width > canvas.width) {
-                    this.paddleRightOrBottom.x = canvas.width - this.paddleRightOrBottom.width;
-                }
-            } else {
-                let paddleCenter = this.paddleRightOrBottom.y + this.paddleRightOrBottom.height / 2;
-
-                // Déplacement fluide vers la position cible calculée
-                if (this.aiTargetPos < paddleCenter - 5) {
-                    this.paddleRightOrBottom.y -= this.aiSpeed * deltaTime;
-                } else if (this.aiTargetPos > paddleCenter + 5) {
-                    this.paddleRightOrBottom.y += this.aiSpeed * deltaTime;
-                }
-
-                // Sécurité des bords du Canvas
-                if (this.paddleRightOrBottom.y < 0) this.paddleRightOrBottom.y = 0;
-                if (this.paddleRightOrBottom.y + this.paddleRightOrBottom.height > canvas.height) {
-                    this.paddleRightOrBottom.y = canvas.height - this.paddleRightOrBottom.height;
-                }
+            // Sécurité des bords d'arène pour l'IA
+            if (this.paddleRightOrBottom.y < 0) this.paddleRightOrBottom.y = 0;
+            if (this.paddleRightOrBottom.y + this.paddleRightOrBottom.height > canvas.height) {
+                this.paddleRightOrBottom.y = canvas.height - this.paddleRightOrBottom.height;
             }
         }
 
-        // 3. Mise à jour de la balle, des rebonds et des BUTS DYNAMIQUES TRON
+        // 3. Gestion du décompte de départ et de la balle
         if (this.countdown > 0) {
-            // On garde en mémoire le chiffre entier AVANT la mise à jour (ex: 3)
             const oldCeil = Math.ceil(this.countdown);
-
             this.countdown -= deltaTime;
-
-            // On regarde le chiffre entier APRÈS la mise à jour (ex: 2)
             const newCeil = Math.ceil(this.countdown);
 
-            // Si le chiffre vient de basculer, on joue un son !
             if (oldCeil !== newCeil && newCeil >= 0) {
                 if (newCeil === 0) {
-                    // Le son du "GO !" : plus aigu, plus long et onde 'sawtooth' pour un effet laser !
-                    playAdvancedBeep(880, 0.3, 'sawtooth');
+                    playAdvancedBeep(880, 0.3, 'sawtooth'); // GO !
                 } else {
-                    // Le son du 3, 2, 1 : un petit bip standard court
-                    playBeep(300, 0.08);
+                    playBeep(300, 0.08); // 3, 2, 1
                 }
             }
         } else if (this.ball && this.board) {
-            this.ball.update(deltaTime, this.board.isVertical());
-            const isVertical = this.board.isVertical();
+            // Mise à jour de la balle (On passe 'false' car ce n'est plus un terrain vertical)
+            this.ball.update(deltaTime, false);
 
-            // Collision raquette 1 (Gauche / Haut)
+            // --- PHYSIQUE UNIVERSELLE ISSUE DU CROQUIS : RAQUETTE JOUEUR GAUCHE ---
             if (this.checkCollision(this.ball, this.paddleLeftOrTop)) {
-                const currentBallSpeed = this.ball.currentSpeed;
-                if (isVertical) {
-                    let relativeIntersectX = (this.paddleLeftOrTop.x + this.paddleLeftOrTop.width / 2) - this.ball.x;
-                    let normalizedIntersectX = relativeIntersectX / (this.paddleLeftOrTop.width / 2);
-                    this.ball.vx = -normalizedIntersectX * currentBallSpeed;
-                    this.ball.vy = currentBallSpeed * 0.8;
-                    this.ball.y = this.paddleLeftOrTop.y + this.paddleLeftOrTop.height + this.ball.radius;
-                } else {
-                    let relativeIntersectY = (this.paddleLeftOrTop.y + this.paddleLeftOrTop.height / 2) - this.ball.y;
-                    let normalizedIntersectY = relativeIntersectY / (this.paddleLeftOrTop.height / 2);
-                    this.ball.vx = currentBallSpeed;
-                    this.ball.vy = -normalizedIntersectY * currentBallSpeed;
-                    this.ball.x = this.paddleLeftOrTop.x + this.paddleLeftOrTop.width + this.ball.radius;
+                playAdvancedBeep(650, 0.06, 'sine'); 
+
+                let relativeIntersectY = this.ball.y - (this.paddleLeftOrTop.y + this.paddleLeftOrTop.height / 2);
+                let normalizedIntersectY = relativeIntersectY / (this.paddleLeftOrTop.height / 2);
+                let absIntersect = Math.abs(normalizedIntersectY);
+
+                let speedMultiplier = 1.05; 
+                if (absIntersect > 0.75) {
+                    speedMultiplier = 1.08; 
+                } else if (absIntersect > 0.3) {
+                    speedMultiplier = 1.06 + (absIntersect - 0.3) * 0.022; 
                 }
-                this.ball.accelerate();
-                playAdvancedBeep(650, 0.06, 'sine'); // Onde 'sine' plus douce et pure pour le joueur
+
+                this.ball.currentSpeed *= speedMultiplier;
+
+                if (absIntersect <= 0.3) {
+                    this.ball.vy = 0; 
+                } else {
+                    this.ball.vy = normalizedIntersectY * (this.ball.currentSpeed * 0.75); 
+                }
+
+                this.ball.vx = Math.sqrt(Math.pow(this.ball.currentSpeed, 2) - Math.pow(this.ball.vy, 2));
+                this.ball.x = this.paddleLeftOrTop.x + this.paddleLeftOrTop.width + this.ball.radius;
             }
 
-            // Collision raquette 2 (Droite / Bas)
+            // --- PHYSIQUE UNIVERSELLE ISSUE DU CROQUIS : RAQUETTE IA DROITE ---
             if (this.checkCollision(this.ball, this.paddleRightOrBottom)) {
-                const currentBallSpeed = this.ball.currentSpeed;
-                if (isVertical) {
-                    let relativeIntersectX = (this.paddleRightOrBottom.x + this.paddleRightOrBottom.width / 2) - this.ball.x;
-                    let normalizedIntersectX = relativeIntersectX / (this.paddleRightOrBottom.width / 2);
-                    this.ball.vx = -normalizedIntersectX * currentBallSpeed;
-                    this.ball.vy = -currentBallSpeed * 0.8;
-                    this.ball.y = this.paddleRightOrBottom.y - this.ball.radius;
-                } else {
-                    let relativeIntersectY = (this.paddleRightOrBottom.y + this.paddleRightOrBottom.height / 2) - this.ball.y;
-                    let normalizedIntersectY = relativeIntersectY / (this.paddleRightOrBottom.height / 2);
-                    this.ball.vx = -currentBallSpeed;
-                    this.ball.vy = -normalizedIntersectY * currentBallSpeed;
-                    this.ball.x = this.paddleRightOrBottom.x - this.ball.radius;
+                playAdvancedBeep(520, 0.08, 'triangle'); 
+
+                let relativeIntersectY = this.ball.y - (this.paddleRightOrBottom.y + this.paddleRightOrBottom.height / 2);
+                let normalizedIntersectY = relativeIntersectY / (this.paddleRightOrBottom.height / 2);
+                let absIntersect = Math.abs(normalizedIntersectY);
+
+                let speedMultiplier = 1.05;
+                if (absIntersect > 0.75) {
+                    speedMultiplier = 1.08;
+                } else if (absIntersect > 0.3) {
+                    speedMultiplier = 1.06 + (absIntersect - 0.3) * 0.022;
                 }
-                this.ball.accelerate();
-                playAdvancedBeep(520, 0.08, 'triangle'); // Onde 'triangle' un peu plus brute pour l'IA
+
+                this.ball.currentSpeed *= speedMultiplier;
+
+                if (absIntersect <= 0.3) {
+                    this.ball.vy = 0; 
+                } else {
+                    this.ball.vy = normalizedIntersectY * (this.ball.currentSpeed * 0.75);
+                }
+
+                this.ball.vx = -Math.sqrt(Math.pow(this.ball.currentSpeed, 2) - Math.pow(this.ball.vy, 2));
+                this.ball.x = this.paddleRightOrBottom.x - this.ball.radius;
             }
 
-            // --- JAUGE D'AVANTAGE TRON : DÉTECTION DES SCORES SUR LES MURS ---
-            if (isVertical) {
-                // Si la balle dépasse le HAUT (l'IA encaisse)
-                if (this.ball.y - this.ball.radius <= 0 && this.ball.vy < 0) {
-                    this.ball.y = this.ball.radius + 15;
-                    this.ball.vy = Math.abs(this.ball.vy);
-                    this.ball.penalize();
-                    playBeep(180, 0.2); // Alerte / Point marqué !
-                    stopDangerAlarm();
+            // --- CONDITIONS DE COMPTAGE DU SCORE (BUTS ENCAISSÉS) ---
+            // Si la balle dépasse la GAUCHE (Le joueur encaisse)
+            if (this.ball.x - this.ball.radius <= 0 && this.ball.vx < 0) {
+                this.ball.x = this.ball.radius + 15;
+                this.ball.vx = Math.abs(this.ball.vx);
+                this.ball.penalize();
+                playBeep(180, 0.2); 
+                stopDangerAlarm(); 
 
-                    if (this.wallDangerJoueur) {
-                        this.wallDangerJoueur = false; // Le joueur efface son alerte !
-                    } else if (this.wallDangerIA) {
-                        console.log("%c🏆 VICTOIRE DU JOUEUR !", "color: #00ff00; font-weight: bold;");
-                        this.stateManager.states['end'].setResult('victory');
-                        this.stateManager.changeState('end');
-                    } else {
-                        this.wallDangerIA = true; // Premier avertissement pour l'IA
-                    }
+                if (this.wallDangerIA) {
+                    this.wallDangerIA = false;
+                } else if (this.wallDangerJoueur) {
+                    console.log("%c💀 GAME OVER !", "color: #ff0000; font-weight: bold;");
+                    this.stateManager.states['end'].setResult('gameover');
+                    this.stateManager.changeState('end');
+                } else {
+                    this.wallDangerJoueur = true;
                 }
-                // Si la balle dépasse le BAS (Le joueur encaisse)
-                if (this.ball.y + this.ball.radius >= canvas.height && this.ball.vy > 0) {
-                    this.ball.y = canvas.height - this.ball.radius - 15;
-                    this.ball.vy = -Math.abs(this.ball.vy);
-                    this.ball.penalize();
-                    playBeep(180, 0.2); // Alerte / Point marqué !
-                    stopDangerAlarm();
+            }
+            // Si la balle dépasse la DROITE (l'IA encaisse)
+            if (this.ball.x + this.ball.radius >= canvas.width && this.ball.vx > 0) {
+                this.ball.x = canvas.width - this.ball.radius - 15;
+                this.ball.vx = -Math.abs(this.ball.vx);
+                this.ball.penalize();
+                playBeep(180, 0.2); 
+                stopDangerAlarm(); 
 
-                    if (this.wallDangerIA) {
-                        this.wallDangerIA = false; // L'IA efface son alerte !
-                    } else if (this.wallDangerJoueur) {
-                        console.log("%c💀 GAME OVER !", "color: #ff0000; font-weight: bold;");
-                        this.stateManager.states['end'].setResult('gameover');
-                        this.stateManager.changeState('end');
-                    } else {
-                        this.wallDangerJoueur = true; // Premier avertissement pour le joueur
-                    }
-                }
-            } else {
-                // Mode PC : Si la balle dépasse la GAUCHE (Le joueur encaisse)
-                if (this.ball.x - this.ball.radius <= 0 && this.ball.vx < 0) {
-                    this.ball.x = this.ball.radius + 15;
-                    this.ball.vx = Math.abs(this.ball.vx);
-                    this.ball.penalize();
-                    playBeep(180, 0.2); // Alerte / Point marqué !
-                    stopDangerAlarm(); // <--- On coupe l'alarme en cours pour recalculer son rythme
-
-                    if (this.wallDangerIA) {
-                        this.wallDangerIA = false;
-                    } else if (this.wallDangerJoueur) {
-                        console.log("%c💀 GAME OVER !", "color: #ff0000; font-weight: bold;");
-                        this.stateManager.states['end'].setResult('gameover');
-                        this.stateManager.changeState('end');
-                    } else {
-                        this.wallDangerJoueur = true;
-                    }
-                }
-                // Si la balle dépasse la DROITE (l'IA encaisse)
-                if (this.ball.x + this.ball.radius >= canvas.width && this.ball.vx > 0) {
-                    this.ball.x = canvas.width - this.ball.radius - 15;
-                    this.ball.vx = -Math.abs(this.ball.vx);
-                    this.ball.penalize();
-                    playBeep(180, 0.2); // Alerte / Point marqué !
-                    stopDangerAlarm(); // <--- On coupe l'alarme en cours pour recalculer son rythme
-
-                    if (this.wallDangerJoueur) {
-                        this.wallDangerJoueur = false;
-                    } else if (this.wallDangerIA) {
-                        console.log("%c🏆 VICTOIRE DU JOUEUR !", "color: #00ff00; font-weight: bold;");
-                        this.stateManager.states['end'].setResult('victory');
-                        this.stateManager.changeState('end');
-                    } else {
-                        this.wallDangerIA = true;
-                    }
+                if (this.wallDangerJoueur) {
+                    this.wallDangerJoueur = false;
+                } else if (this.wallDangerIA) {
+                    console.log("%c🏆 VICTOIRE DU JOUEUR !", "color: #00ff00; font-weight: bold;");
+                    this.stateManager.states['end'].setResult('victory');
+                    this.stateManager.changeState('end');
+                } else {
+                    this.wallDangerIA = true;
                 }
             }
         }
 
-        // --- GESTION AUDIO DE L'ALARME DE DANGER DYNAMIQUE TRON ---
+        // --- GESTION AUDIO DE L'ALARME DE DANGER DYNAMIQUE ---
         if (this.wallDangerJoueur) {
-            // Priorité absolue au joueur : alerte panique ultra-rapide !
             startDangerAlarm('joueur');
         } else if (this.wallDangerIA) {
-            // L'IA est en danger : alerte plus lente et lourde
             startDangerAlarm('ia');
         } else {
-            // Les deux sont à l'abri, on coupe proprement
             stopDangerAlarm();
         }
     }
 
     draw(ctx, canvas) {
-        const isVertical = this.board ? this.board.isVertical() : false;
-
-        // 1. Dessin du terrain
+        // 1. Dessin de l'arrière-plan du terrain
         if (this.board) this.board.render(ctx);
 
-        // --- AFFICHAGE DES MURS DE DANGER NÉON FIXES EN ROUGE ---
+        // 2. Affichage néon rouge des murs de danger (Géré à 100% sur les côtés gauche/droite)
         ctx.fillStyle = "rgba(255, 0, 0, 0.4)";
         ctx.shadowBlur = 20;
         ctx.shadowColor = "#ff0000";
 
-        if (isVertical) {
-            // Mode Mobile
-            if (this.wallDangerIA) ctx.fillRect(0, 0, ctx.canvas.width, 15); // Haut en rouge
-            if (this.wallDangerJoueur) ctx.fillRect(0, ctx.canvas.height - 15, ctx.canvas.width, 15); // Bas en rouge
-        } else {
-            // Mode PC
-            if (this.wallDangerJoueur) ctx.fillRect(0, 0, 15, ctx.canvas.height); // Gauche en rouge
-            if (this.wallDangerIA) ctx.fillRect(ctx.canvas.width - 15, 0, 15, ctx.canvas.height); // Droite en rouge
-        }
-        ctx.shadowBlur = 0; // Reset ombres
+        if (this.wallDangerJoueur) ctx.fillRect(0, 0, 15, canvas.height); // Gauche rouge
+        if (this.wallDangerIA) ctx.fillRect(canvas.width - 15, 0, 15, canvas.height); // Droite rouge
 
-        // 2. Dessin des entités
+        ctx.shadowBlur = 0; 
+
+        // 3. Dessin des entités (Raquettes et balle)
         if (this.paddleLeftOrTop) this.paddleLeftOrTop.render(ctx);
         if (this.paddleRightOrBottom) this.paddleRightOrBottom.render(ctx);
         if (this.ball) this.ball.render(ctx);
 
-        // 3. Dessin du compte à rebours
+        // 4. Dessin du compte à rebours de départ
         if (this.countdown > 0) {
             ctx.fillStyle = "#ff6600";
             ctx.font = "bold 60px 'Courier New'";
             ctx.shadowBlur = 20;
             ctx.shadowColor = "#ff6600";
-            ctx.fillText(Math.ceil(this.countdown), ctx.canvas.width / 2, ctx.canvas.height / 2);
+            ctx.fillText(Math.ceil(this.countdown), canvas.width / 2, canvas.height / 2);
             ctx.shadowBlur = 0;
         }
     }
@@ -370,7 +278,6 @@ export class GameState {
 
     exit() {
         console.log("Fin du match : destruction des alarmes");
-        // On coupe les variables de danger avant d'éteindre l'alarme
         this.wallDangerJoueur = false;
         this.wallDangerIA = false;
         stopDangerAlarm();

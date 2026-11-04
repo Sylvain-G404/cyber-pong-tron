@@ -75,3 +75,32 @@ Si ce voyage au cœur de la Grille néon vous a plu ou que vous utilisez ces mod
 
 - **GitHub :** [@Sylvain-G404](https://github.com/Sylvain-G404)
 - **Portfolio :** [Mon-Portfolio-Temps](https://sylvain-g404.github.io/Mon-Portfolio-Temps/)
+
+---
+
+## ⚡ NOUVEAUTÉ : Version 2.0 — L'Ère HD & Physique Adaptative (Active)
+
+Cette mise à jour marque le passage du prototype vers une architecture de production haut de gamme (AAA), préparant le jeu pour son intégration finale sous **Tauri 2**.
+
+### 🛠️ Le Journal des Modifications (Changelog V2)
+
+#### 1. Moteur Physique Dynamique (Système de Croquis 🎯)
+
+- **Rebonds Réalistes :** Liaison des axes de vitesse vertical (`vy`) et horizontal (`vx`) via le théorème de Pythagore. La balle conserve une énergie cinétique globale constante lors de l'impact, supprimant les accélérations anormales.
+- **Technique des 3 Zones d'Impact :**
+  - **Zone Centre (Impact Neutre) :** Redressement de la trajectoire à l'horizontale parfaite (`vy = 0`) et application d'un boost de vitesse standard de **+5%**.
+  - **Zones Intermédiaires :** Déviation angulaire moyenne et boost progressif de **+6% à +7%**.
+  - **Zones Extrêmes (Bords de Raquette) :** Angle d'éjection maximal (prise de risque) récompensé par un boost critique de **+8%**.
+
+#### 2. Résolution Logique Immuable (1600x1000)
+
+- **Arène Virtuelle Fixe :** Le cœur du jeu effectue désormais tous ses calculs dans un espace logique unique de `1600x1000 pixels`. Le gameplay (vitesse, trajectoires, dimensions) est rigoureusement identique et équitable, peu importe la taille de l'écran ou de la fenêtre du navigateur.
+- **Responsive Typographique :** Les polices de caractères et espacements des menus utilisent des ratios dynamiques basés sur `canvas.height` (ex: `7.5%` pour les titres), garantissant une lisibilité et des proportions parfaites en plein écran HD ou 4K.
+- **Sécurité Mobile "Landscape Only" :** Intégration d'un overlay CSS intelligent qui bloque le jeu en mode portrait, forçant le joueur à incliner son appareil à l'horizontale pour préserver l'intégrité de l'arène.
+
+#### 3. Refactoring & Optimisation du Code
+
+- **Purge Massives des Spaghettis :** Suppression de plus de 45% de code redondant (méthodes obsolètes, conditions `isVertical`, axes doubles) dans `gameState.js`, `ball.js` et `paddle.js`. Le jeu n'exécute plus que la physique horizontale universelle.
+- **UX Centralisée :** Harmonisation des menus (Écran Titre, Options, Écran de Fin) fonctionnant tous avec un système interactif de flèches du clavier (`selectedIndex`), d'écouteurs isolés et de retours sonores rétro dédiés.
+
+---

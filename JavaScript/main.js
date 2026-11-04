@@ -26,20 +26,32 @@ const gameLoop = new GameLoop(
 
 // Fonction pour adapter le canvas à la taille de la fenêtre
 function resizeCanvas() {
-    const width = window.innerWidth;
-    const height = window.innerHeight;
+    // 1. La RÉSOLUTION LOGIQUE INTERNE (Immuable - Ne change jamais)
+    // Vos calculs de vitesse, de position de balle et d'IA se baseront TOUJOURS sur ce rectangle fixe.
+    canvas.width = 1600;
+    canvas.height = 1000;
 
-    if (width < height) {
-        canvas.width = width * 0.95;
-        canvas.height = height * 0.90;
+    // 2. Le RATIO d'aspect recherché (16:10 ou 16:9 selon tes préférences)
+    const TARGET_RATIO = canvas.width / canvas.height;
+
+    // 3. Calcul de la taille d'affichage CSS dynamique
+    let viewWidth = window.innerWidth * 0.85;
+    let viewHeight = window.innerHeight * 0.85;
+
+    if (viewWidth / viewHeight > TARGET_RATIO) {
+        viewWidth = viewHeight * TARGET_RATIO;
     } else {
-        canvas.width = width * 0.85;
-        canvas.height = height * 0.85;
+        viewHeight = viewWidth / TARGET_RATIO;
     }
 
-    // On force le StateManager à redessiner l'écran actuel après un redimensionnement
+    // 4. On applique la taille calculée uniquement sur le style d'affichage CSS
+    canvas.style.width = `${viewWidth}px`;
+    canvas.style.height = `${viewHeight}px`;
+
+    // On force le gestionnaire à rafraîchir l'affichage
     stateManager.render();
 }
+
 
 // Initialisation globale au chargement du DOM
 window.addEventListener('DOMContentLoaded', () => {
