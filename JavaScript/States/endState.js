@@ -1,3 +1,4 @@
+import { playAdvancedBeep, stopAmbientMusic  } from '../Engine/sound.js';
 // JavaScript/States/endState.js
 
 export class EndState {
@@ -13,7 +14,22 @@ export class EndState {
     }
 
     enter() {
-        console.log(`Écran de fin affiché : ${this.result.toUpperCase()}`);
+
+        stopAmbientMusic(); // Sécurité supplémentaire
+
+        // --- SONS DE FIN DE PARTIE ---
+        if (this.result === 'victory') {
+            // Petite mélodie montante héroïque 🏆
+            playAdvancedBeep(440, 0.1, 'square');
+            setTimeout(() => playAdvancedBeep(554, 0.1, 'square'), 100);
+            setTimeout(() => playAdvancedBeep(659, 0.15, 'square'), 200);
+            setTimeout(() => playAdvancedBeep(880, 0.3, 'sawtooth'), 300);
+        } else {
+            // Son lourd et agressif qui s'effondre (BZZZUUUuuu...) 💀
+            playAdvancedBeep(150, 0.15, 'sawtooth');
+            setTimeout(() => playAdvancedBeep(110, 0.15, 'sawtooth'), 120);
+            setTimeout(() => playAdvancedBeep(85, 0.4, 'sawtooth'), 240);
+        }
     }
 
     update(deltaTime) {

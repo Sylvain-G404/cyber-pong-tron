@@ -8,13 +8,16 @@
 |   \---Favicon
 |       |   Favicon.K.sf.blanc.png
 |       \---Favicon.K.sf.png
++---Data
+|   \---aiConfig.json
 +---Infos_Structure
 +---JavaScript
 |   |   main.js
 |   +---Engine
 |   |   |   gameLoop.js
 |   |   |   input.js
-|   |   \---network.js
+|   |   |   network.js
+|   |   \---sound.js
 |   +---Entities
 |   |   |   ball.js
 |   |   |   board.js

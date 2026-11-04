@@ -1,3 +1,5 @@
+import { startMenuMusic } from '../Engine/sound.js';
+
 // JavaScript/States/menuState.js
 
 export class MenuState {
@@ -8,6 +10,7 @@ export class MenuState {
     }
 
     enter() {
+        startMenuMusic();
         console.log("Entrée dans le Menu Principal");
     }
 

@@ -3,6 +3,10 @@
 import { Board } from '../Entities/board.js';
 import { Paddle } from '../Entities/paddle.js';
 import { Ball } from '../Entities/ball.js';
+import { playBeep, playAdvancedBeep, startDangerAlarm, stopDangerAlarm, stopAmbientMusic, stopMenuMusic } from '../Engine/sound.js';
+
+
+
 
 export class GameState {
     constructor(stateManager, input) {
@@ -22,6 +26,7 @@ export class GameState {
 
     enter() {
         console.log("Le match commence !");
+        stopMenuMusic();
         const canvas = this.stateManager.canvas;
     
         this.wallDangerJoueur = false;
@@ -65,7 +70,7 @@ export class GameState {
         }
     }
 
-update(deltaTime) {
+    update(deltaTime) {
         const canvas = this.stateManager.canvas;
 
         // 1. Mise à jour de ton contrôleur de Raquette (Joueur 1)
@@ -105,7 +110,24 @@ update(deltaTime) {
 
         // 3. Mise à jour de la balle, des rebonds et des BUTS DYNAMIQUES TRON
         if (this.countdown > 0) {
+            // On garde en mémoire le chiffre entier AVANT la mise à jour (ex: 3)
+            const oldCeil = Math.ceil(this.countdown);
+
             this.countdown -= deltaTime;
+
+            // On regarde le chiffre entier APRÈS la mise à jour (ex: 2)
+            const newCeil = Math.ceil(this.countdown);
+
+            // Si le chiffre vient de basculer, on joue un son !
+            if (oldCeil !== newCeil && newCeil >= 0) {
+                if (newCeil === 0) {
+                    // Le son du "GO !" : plus aigu, plus long et onde 'sawtooth' pour un effet laser !
+                    playAdvancedBeep(880, 0.3, 'sawtooth');
+                } else {
+                    // Le son du 3, 2, 1 : un petit bip standard court
+                    playBeep(300, 0.08);
+                }
+            }
         } else if (this.ball && this.board) {
             this.ball.update(deltaTime, this.board.isVertical());
             const isVertical = this.board.isVertical();
@@ -127,6 +149,7 @@ update(deltaTime) {
                     this.ball.x = this.paddleLeftOrTop.x + this.paddleLeftOrTop.width + this.ball.radius;
                 }
                 this.ball.accelerate();
+                playAdvancedBeep(650, 0.06, 'sine'); // Onde 'sine' plus douce et pure pour le joueur
             }
 
             // Collision raquette 2 (Droite / Bas)
@@ -146,6 +169,7 @@ update(deltaTime) {
                     this.ball.x = this.paddleRightOrBottom.x - this.ball.radius;
                 }
                 this.ball.accelerate();
+                playAdvancedBeep(520, 0.08, 'triangle'); // Onde 'triangle' un peu plus brute pour l'IA
             }
 
             // --- JAUGE D'AVANTAGE TRON : DÉTECTION DES SCORES SUR LES MURS ---
@@ -155,6 +179,8 @@ update(deltaTime) {
                     this.ball.y = this.ball.radius + 15;
                     this.ball.vy = Math.abs(this.ball.vy);
                     this.ball.penalize();
+                    playBeep(180, 0.2); // Alerte / Point marqué !
+                    stopDangerAlarm();
 
                     if (this.wallDangerJoueur) {
                         this.wallDangerJoueur = false; // Le joueur efface son alerte !
@@ -171,6 +197,8 @@ update(deltaTime) {
                     this.ball.y = canvas.height - this.ball.radius - 15;
                     this.ball.vy = -Math.abs(this.ball.vy);
                     this.ball.penalize();
+                    playBeep(180, 0.2); // Alerte / Point marqué !
+                    stopDangerAlarm();
 
                     if (this.wallDangerIA) {
                         this.wallDangerIA = false; // L'IA efface son alerte !
@@ -188,6 +216,8 @@ update(deltaTime) {
                     this.ball.x = this.ball.radius + 15;
                     this.ball.vx = Math.abs(this.ball.vx);
                     this.ball.penalize();
+                    playBeep(180, 0.2); // Alerte / Point marqué !
+                    stopDangerAlarm(); // <--- On coupe l'alarme en cours pour recalculer son rythme
 
                     if (this.wallDangerIA) {
                         this.wallDangerIA = false;
@@ -204,6 +234,8 @@ update(deltaTime) {
                     this.ball.x = canvas.width - this.ball.radius - 15;
                     this.ball.vx = -Math.abs(this.ball.vx);
                     this.ball.penalize();
+                    playBeep(180, 0.2); // Alerte / Point marqué !
+                    stopDangerAlarm(); // <--- On coupe l'alarme en cours pour recalculer son rythme
 
                     if (this.wallDangerJoueur) {
                         this.wallDangerJoueur = false;
@@ -216,6 +248,18 @@ update(deltaTime) {
                     }
                 }
             }
+        }
+
+        // --- GESTION AUDIO DE L'ALARME DE DANGER DYNAMIQUE TRON ---
+        if (this.wallDangerJoueur) {
+            // Priorité absolue au joueur : alerte panique ultra-rapide !
+            startDangerAlarm('joueur');
+        } else if (this.wallDangerIA) {
+            // L'IA est en danger : alerte plus lente et lourde
+            startDangerAlarm('ia');
+        } else {
+            // Les deux sont à l'abri, on coupe proprement
+            stopDangerAlarm();
         }
     }
 
@@ -265,6 +309,11 @@ update(deltaTime) {
     }
 
     exit() {
-        console.log("Fin du match");
+        console.log("Fin du match : destruction des alarmes");
+        // On coupe les variables de danger avant d'éteindre l'alarme
+        this.wallDangerJoueur = false;
+        this.wallDangerIA = false;
+        stopDangerAlarm();
+        stopAmbientMusic();
     }
 }

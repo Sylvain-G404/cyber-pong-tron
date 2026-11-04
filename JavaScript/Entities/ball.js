@@ -1,3 +1,4 @@
+import { playBeep } from '../Engine/sound.js';
 // JavaScript/Entities/ball.js
 
 export class Ball {
@@ -79,12 +80,28 @@ export class Ball {
         // --- REBONDS UNIQUEMENT SUR LES MURS LATÉRAUX (PAS LES BUTS) ---
         if (isVertical) {
             // Mode Mobile : Rebond uniquement sur les côtés (Gauche et Droite)
-            if (this.x - this.radius < 0) { this.x = this.radius; this.vx = Math.abs(this.vx); }
-            if (this.x + this.radius > this.canvasWidth) { this.x = this.canvasWidth - this.radius; this.vx = -Math.abs(this.vx); }
+            if (this.x - this.radius < 0) {
+                this.x = this.radius;
+                this.vx = Math.abs(this.vx);
+                playBeep(450, 0.05); // Bip Mur Gauche !
+            }
+            if (this.x + this.radius > this.canvasWidth) {
+                this.x = this.canvasWidth - this.radius;
+                this.vx = -Math.abs(this.vx);
+                playBeep(450, 0.05); // Bip Mur Droite !
+            }
         } else {
             // Mode PC : Rebond uniquement sur les côtés (Haut et Bas)
-            if (this.y - this.radius < 0) { this.y = this.radius; this.vy = Math.abs(this.vy); }
-            if (this.y + this.radius > this.canvasHeight) { this.y = this.canvasHeight - this.radius; this.vy = -Math.abs(this.vy); }
+            if (this.y - this.radius < 0) {
+                this.y = this.radius;
+                this.vy = Math.abs(this.vy);
+                playBeep(450, 0.05); // Bip Mur Haut !
+            }
+            if (this.y + this.radius > this.canvasHeight) {
+                this.y = this.canvasHeight - this.radius;
+                this.vy = -Math.abs(this.vy);
+                playBeep(450, 0.05); // Bip Mur Bas !
+            }
         }
     }
 
