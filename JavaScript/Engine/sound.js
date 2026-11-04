@@ -62,7 +62,7 @@ export function startMenuMusic() {
     if (!menuMusic) {
         menuMusic = new Audio('Assets/Son/menu_theme.mp3');
         menuMusic.loop = true; // Permet de rejouer la musique en boucle
-        menuMusic.volume = 0.2; // Volume à 20% pour ne pas exploser les oreilles du joueur
+        menuMusic.volume = 0.05; // Volume à 5% pour ne pas exploser les oreilles du joueur
     }
     
     // On la lance uniquement si elle est en pause

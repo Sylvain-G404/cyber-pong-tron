@@ -5,9 +5,11 @@
 |   index.html
 |   README.md
 +---Assets
-|   \---Favicon
-|       |   Favicon.K.sf.blanc.png
-|       \---Favicon.K.sf.png
+|   +---Favicon
+|   |   |   Favicon.K.sf.blanc.png
+|   |   \---Favicon.K.sf.png
+|   \---Son
+|       \---menu_theme.mp3
 +---Data
 |   \---aiConfig.json
 +---Infos_Structure
@@ -23,9 +25,11 @@
 |   |   |   board.js
 |   |   \---paddle.js
 |   \---States
+|       |   creditsState.js
 |       |   endState.js
 |       |   gameState.js
 |       |   menuState.js
+|       |   optionsState.js
 |       \---stateManager.js
 +---Screen_Site
 |   |   Screenshot 2026-11-01 at 17-35-25 cyber-pong-tron_Menu.png

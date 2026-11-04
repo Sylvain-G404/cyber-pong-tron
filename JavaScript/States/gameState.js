@@ -19,12 +19,17 @@ export class GameState {
         // --- NOUVEAU SYSTÈME DESIGN : MURS DE DANGER TRON ---
         this.wallDangerJoueur = false; // Si vrai, le mur du joueur reste rouge (Alerte Game Over)
         this.wallDangerIA = false;     // Si vrai, le mur de l'IA reste rouge
-        
+
         // Le compte à rebours de départ
         this.countdown = 3;
+
+        // --- PROPRIÉTÉS DE DIFFICULTÉ IA DYNAMIQUES ---
+        this.aiSpeed = 400;
+        this.aiReactionTimer = 0;
+        this.aiTargetY = 0; // Contient la cible calculée (avec marge d'erreur)
     }
 
-    enter() {
+    async enter() {
         console.log("Le match commence !");
         stopMenuMusic();
         const canvas = this.stateManager.canvas;
@@ -32,6 +37,30 @@ export class GameState {
         this.wallDangerJoueur = false;
         this.wallDangerIA = false;
         this.countdown = 3;
+
+        // 1. Détermination de la clé en minuscules ('facile', 'moyen', 'difficile')
+        const diffKey = (this.stateManager.currentDifficulty || 'Moyen').toLowerCase();
+
+        // 2. Chargement AAA du fichier de configuration JSON
+        try {
+            const response = await fetch('Data/aiConfig.json');
+            const config = await response.json();
+            const aiSettings = config[diffKey] || config['moyen'];
+
+            // On injecte les paramètres du JSON dans nos variables
+            this.aiSpeed = aiSettings.speed;
+            this.aiReactionInterval = aiSettings.reactionTime; // ex: 0.15s
+            this.aiErrorMargin = aiSettings.errorMargin;       // ex: 40px
+            
+            console.log(`[IA CONFIG] Mode ${diffKey} appliqué : Vitesse=${this.aiSpeed}, Réaction=${this.aiErrorMargin}px`);
+        } catch (error) {
+            console.error("Impossible de charger la configuration de l'IA, valeurs de secours appliquées :", error);
+            // Valeurs de secours au cas où le fichier JSON est inaccessible
+            this.aiSpeed = 400;
+            this.aiReactionInterval = 0.15;
+            this.aiErrorMargin = 40;
+        }
+
         this.board = new Board(canvas);
         this.ball = new Ball(canvas.width, canvas.height);
 
@@ -78,29 +107,60 @@ export class GameState {
             this.paddleLeftOrTop.update(deltaTime, this.input, canvas.width, canvas.height);
         }
 
-        // 2. LE PILOTAGE AUTOMATIQUE DE L'IA (RAQUETTE ADVERSE)
+                // 2. LE PILOTAGE AUTOMATIQUE DE L'IA ADAPTATIF AAA
         if (this.paddleRightOrBottom && this.ball) {
             const isVertical = this.board.isVertical();
-            const iaSpeed = this.paddleRightOrBottom.speed * 0.75;
 
+            // --- A. GESTION DU TEMPS DE RÉACTION ET DU CALCUL DE LA CIBLE ---
+            if (!this.aiReactionTimer) this.aiReactionTimer = 0;
+            this.aiReactionTimer += deltaTime;
+
+            // Si le temps de réaction est écoulé, l'IA "regarde" la balle et met à jour sa cible
+            if (this.aiReactionTimer >= this.aiReactionInterval) {
+                this.aiReactionTimer = 0; // On réinitialise le chrono
+
+                // Calcul d'une erreur aléatoire (entre -marge et +marge)
+                const error = (Math.random() - 0.5) * 2 * this.aiErrorMargin;
+
+                if (isVertical) {
+                    this.aiTargetPos = this.ball.x + error; // Cible sur l'axe X (Mobile)
+                } else {
+                    this.aiTargetPos = this.ball.y + error; // Cible sur l'axe Y (PC)
+                }
+            }
+
+            // Si aucune cible n'est encore définie au tout début, on prend le centre de la balle
+            if (this.aiTargetPos === undefined) {
+                this.aiTargetPos = isVertical ? this.ball.x : this.ball.y;
+            }
+
+            // --- B. DÉPLACEMENT DE LA RAQUETTE VERS LA CIBLE ---
             if (isVertical) {
                 let paddleCenter = this.paddleRightOrBottom.x + this.paddleRightOrBottom.width / 2;
-                if (this.ball.x < paddleCenter - 10) {
-                    this.paddleRightOrBottom.x -= iaSpeed * deltaTime;
-                } else if (this.ball.x > paddleCenter + 10) {
-                    this.paddleRightOrBottom.x += iaSpeed * deltaTime;
+
+                // Déplacement fluide vers la position cible calculée
+                if (this.aiTargetPos < paddleCenter - 5) {
+                    this.paddleRightOrBottom.x -= this.aiSpeed * deltaTime;
+                } else if (this.aiTargetPos > paddleCenter + 5) {
+                    this.paddleRightOrBottom.x += this.aiSpeed * deltaTime;
                 }
+
+                // Sécurité des bords du Canvas
                 if (this.paddleRightOrBottom.x < 0) this.paddleRightOrBottom.x = 0;
                 if (this.paddleRightOrBottom.x + this.paddleRightOrBottom.width > canvas.width) {
                     this.paddleRightOrBottom.x = canvas.width - this.paddleRightOrBottom.width;
                 }
             } else {
                 let paddleCenter = this.paddleRightOrBottom.y + this.paddleRightOrBottom.height / 2;
-                if (this.ball.y < paddleCenter - 10) {
-                    this.paddleRightOrBottom.y -= iaSpeed * deltaTime;
-                } else if (this.ball.y > paddleCenter + 10) {
-                    this.paddleRightOrBottom.y += iaSpeed * deltaTime;
+
+                // Déplacement fluide vers la position cible calculée
+                if (this.aiTargetPos < paddleCenter - 5) {
+                    this.paddleRightOrBottom.y -= this.aiSpeed * deltaTime;
+                } else if (this.aiTargetPos > paddleCenter + 5) {
+                    this.paddleRightOrBottom.y += this.aiSpeed * deltaTime;
                 }
+
+                // Sécurité des bords du Canvas
                 if (this.paddleRightOrBottom.y < 0) this.paddleRightOrBottom.y = 0;
                 if (this.paddleRightOrBottom.y + this.paddleRightOrBottom.height > canvas.height) {
                     this.paddleRightOrBottom.y = canvas.height - this.paddleRightOrBottom.height;
@@ -263,7 +323,7 @@ export class GameState {
         }
     }
 
-    render(ctx) {
+    draw(ctx, canvas) {
         const isVertical = this.board ? this.board.isVertical() : false;
 
         // 1. Dessin du terrain

@@ -43,7 +43,7 @@ export class EndState {
         }
     }
 
-    render(ctx) {
+    draw(ctx, canvas) {
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
 

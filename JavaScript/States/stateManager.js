@@ -7,6 +7,8 @@ export class StateManager {
         
         this.states = {};       // Stocke tous nos écrans (Menu, Jeu, Game Over)
         this.currentState = null; // L'écran actuellement affiché
+
+        this.currentDifficulty = 'Moyen'; // Difficulté de base du jeu
     }
 
     // Enregistre un nouvel écran dans le gestionnaire
@@ -48,8 +50,10 @@ export class StateManager {
         // Sécurité : On nettoie TOUJOURS le canvas complet avant de redessiner
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-        if (this.currentState && this.currentState.render) {
-            this.currentState.render(this.ctx);
+        // Appel de la méthode d'affichage standardisée du contenu de l'écran
+        if (this.currentState && this.currentState.draw) {
+            this.currentState.draw(this.ctx, this.canvas);
         }
     }
+
 }

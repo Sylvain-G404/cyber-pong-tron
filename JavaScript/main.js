@@ -7,7 +7,8 @@ import { StateManager } from './States/stateManager.js';
 import { MenuState } from './States/menuState.js';
 import { GameState } from './States/gameState.js';
 import { EndState } from './States/endState.js';
-
+import { CreditsState } from './States/creditsState.js';
+import { OptionsState } from './States/optionsState.js';
 
 // Récupération du Canvas et de son contexte de dessin
 const canvas = document.getElementById('gameCanvas');
@@ -15,10 +16,9 @@ const ctx = canvas.getContext('2d');
 
 // 1. Instanciation du Gestionnaire d'États (Le Cerveau)
 const stateManager = new StateManager(ctx, canvas);
-const input = new Input(); // <--- AJOUTE CETTE LIGNE
+const input = new Input(); 
 
 // 2. Instanciation de la Boucle de Jeu (Le Cœur)
-// On lui transmet les fonctions d'aiguillage du StateManager
 const gameLoop = new GameLoop(
     (deltaTime) => stateManager.update(deltaTime),
     () => stateManager.render()
@@ -47,10 +47,12 @@ window.addEventListener('DOMContentLoaded', () => {
     resizeCanvas();
     window.addEventListener('resize', resizeCanvas);
 
-    // 3. Enregistrement des différents écrans du jeu
+    // 3. Enregistrement des différents écrans du jeu (Tous reliés au StateManager et à l'Input)
     stateManager.addState('menu', new MenuState(stateManager, input));
     stateManager.addState('game', new GameState(stateManager, input));
     stateManager.addState('end', new EndState(stateManager, input));
+    stateManager.addState('credits', new CreditsState(stateManager, input));
+    stateManager.addState('options', new OptionsState(stateManager, input));
 
     // 4. On définit l'écran de départ sur le MENU principal
     stateManager.changeState('menu');
