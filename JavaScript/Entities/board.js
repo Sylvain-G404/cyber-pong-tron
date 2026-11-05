@@ -5,32 +5,48 @@ export class Board {
         this.canvas = canvas;
     }
 
-    // Permet de savoir à tout moment si le terrain est en mode Mobile (Vertical)
-    isVertical() {
-        return this.canvas.width < this.canvas.height;
-    }
-
-    // Dessine les lignes de l'arène TRON
     render(ctx) {
-        ctx.strokeStyle = "rgba(0, 240, 255, 0.4)"; // Cyan TRON semi-transparent
+        const w = this.canvas.width;
+        const h = this.canvas.height;
+
+        // ==========================================
+        // 1. LA GRILLE CYBER QUADRILLÉE (STYLE SÉCURISÉ AAA)
+        // ==========================================
+        ctx.save();
+        ctx.strokeStyle = "rgba(0, 240, 255, 0.07)"; // Un poil plus discret (7%) pour ne pas fatiguer les yeux
+        ctx.lineWidth = 1;
+
+        // A. Les lignes verticales régulières (Pas de perspective, espacement fixe !)
+        const stepX = 80; // Largeur de chaque carré de la grille
+        for (let x = 0; x <= w; x += stepX) {
+            ctx.beginPath();
+            ctx.moveTo(x, 0);
+            ctx.lineTo(x, h);
+            ctx.stroke();
+        }
+
+        // B. Les lignes horizontales régulières (Espacement fixe !)
+        const stepY = 80; // Hauteur de chaque carré de la grille
+        for (let y = 0; y <= h; y += stepY) {
+            ctx.beginPath();
+            ctx.moveTo(0, y);
+            ctx.lineTo(w, y);
+            ctx.stroke();
+        }
+        ctx.restore();
+
+        // ==========================================
+        // 2. LE FILET CENTRAL CLASSIQUE
+        // ==========================================
+        ctx.save();
+        ctx.strokeStyle = "rgba(0, 240, 255, 0.4)"; 
         ctx.lineWidth = 2;
-        
-        // On configure de vrais pointillés rétro (5px dessinés, 5px vides)
-        ctx.setLineDash([8, 8]); 
+        ctx.setLineDash([8, 8]); // On remet tes super pointillés rétro !
 
         ctx.beginPath();
-        if (this.isVertical()) {
-            // Mode Mobile : Le filet est horizontal (au milieu de la hauteur)
-            ctx.moveTo(0, this.canvas.height / 2);
-            ctx.lineTo(this.canvas.width, this.canvas.height / 2);
-        } else {
-            // Mode PC : Le filet est vertical (au milieu de la largeur) - CORRIGÉ ICI !
-            ctx.moveTo(this.canvas.width / 2, 0);
-            ctx.lineTo(this.canvas.width / 2, this.canvas.height);
-        }
+        ctx.moveTo(w / 2, 0);
+        ctx.lineTo(w / 2, h);
         ctx.stroke();
-        
-        // On remet à zéro les pointillés pour ne pas impacter les autres dessins (balles, raquettes)
-        ctx.setLineDash([]);
+        ctx.restore();
     }
 }
