@@ -47,7 +47,8 @@ export class GameState {
 
             this.aiSpeed = aiSettings.speed;
             this.aiReactionInterval = aiSettings.reactionTime; 
-            this.aiErrorMargin = aiSettings.errorMargin;       
+            this.aiErrorMargin = aiSettings.errorMargin;
+            this.aiMalice = aiSettings.malice || false;
 
             console.log(`[IA CONFIG] Mode ${diffKey} appliqué : Vitesse=${this.aiSpeed}, Réaction=${this.aiErrorMargin}px`);
         } catch (error) {
@@ -93,18 +94,43 @@ export class GameState {
             if (!this.aiReactionTimer) this.aiReactionTimer = 0;
             this.aiReactionTimer += deltaTime;
 
-            // Si le temps de réaction est écoulé, l'IA recalcule sa cible sur l'axe Y
+            // Si le temps de réaction est écoulé, l'IA recalcule son alignement
             if (this.aiReactionTimer >= this.aiReactionInterval) {
                 this.aiReactionTimer = 0; 
-                const error = (Math.random() - 0.5) * 2 * this.aiErrorMargin;
-                this.aiTargetPos = this.ball.y + error; 
+
+                if (this.aiMalice && this.paddleLeftOrTop) {
+                    // --- LOGIQUE HARDCORE MALICIEUSE ---
+                    // L'IA n'ajuste sa visée agressive que si la balle vient vers elle
+                    if (this.ball.vx > 0) {
+                        const playerCenter = this.paddleLeftOrTop.y + this.paddleLeftOrTop.height / 2;
+                        const aiHeight = this.paddleRightOrBottom.height;
+                        const targetOffset = aiHeight * 0.42; 
+
+                        // Si le joueur est en haut (Y petit)
+                        if (playerCenter < canvas.height / 2) {
+                            // L'IA veut envoyer la balle vers le bas -> elle frappe avec son BAS
+                            // Aligner le bas de la raquette avec la balle : Y_raquette_centre doit être plus haut que Y_balle
+                            this.aiTargetPos = this.ball.y - targetOffset;
+                        } else {
+                            // Le joueur est en bas -> l'IA veut envoyer vers le haut -> elle frappe avec son HAUT
+                            this.aiTargetPos = this.ball.y + targetOffset;
+                        }
+                    } else {
+                        // Si la balle s'éloigne, l'IA se replace tranquillement au centre de l'écran ou suit le Y de base
+                        this.aiTargetPos = this.ball.y;
+                    }
+                } else {
+                    // --- LOGIQUE CLASSIQUE (FACILE / MOYEN / DIFFICILE) ---
+                    const error = (Math.random() - 0.5) * 2 * this.aiErrorMargin;
+                    this.aiTargetPos = this.ball.y + error; 
+                }
             }
 
             if (this.aiTargetPos === undefined) {
                 this.aiTargetPos = this.ball.y;
             }
 
-            // Déplacement fluide de la raquette IA vers l'objectif Y
+            // Déplacement fluide de la raquette IA vers l'objectif Y (Inchangé)
             let paddleCenter = this.paddleRightOrBottom.y + this.paddleRightOrBottom.height / 2;
 
             if (this.aiTargetPos < paddleCenter - 5) {
@@ -113,12 +139,13 @@ export class GameState {
                 this.paddleRightOrBottom.y += this.aiSpeed * deltaTime;
             }
 
-            // Sécurité des bords d'arène pour l'IA
+            // Sécurité des bords d'arène pour l'IA (Inchangé)
             if (this.paddleRightOrBottom.y < 0) this.paddleRightOrBottom.y = 0;
             if (this.paddleRightOrBottom.y + this.paddleRightOrBottom.height > canvas.height) {
                 this.paddleRightOrBottom.y = canvas.height - this.paddleRightOrBottom.height;
             }
         }
+
 
         // --- GESTION DU DÉCOMPTE V2 (ANIMATION ISOLÉE) ---
         if (this.countdownAnimation && !this.countdownAnimation.isFinished) {
