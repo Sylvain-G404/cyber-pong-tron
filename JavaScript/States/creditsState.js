@@ -22,8 +22,6 @@ export class CreditsState {
         }
     }
 
-    update(deltaTime) {}
-
     draw(ctx, canvas) {
         // 1. Fond noir profond
         ctx.fillStyle = '#000000';
