@@ -29,7 +29,7 @@ export class StateManager {
         }
 
         this.currentState = this.states[name];
-        
+
         // On initialise le nouvel écran
         if (this.currentState && this.currentState.enter) {
             this.currentState.enter();

@@ -64,7 +64,7 @@ export class GameState {
 
         const pWidth = 15;
         const pHeight = canvas.height * 0.2; 
-        
+
         this.paddleLeftOrTop = new Paddle(
             'left', 
             20, 
@@ -145,7 +145,6 @@ export class GameState {
                 this.paddleRightOrBottom.y = canvas.height - this.paddleRightOrBottom.height;
             }
         }
-
 
         // --- GESTION DU DÉCOMPTE V2 (ANIMATION ISOLÉE) ---
         if (this.countdownAnimation && !this.countdownAnimation.isFinished) {
@@ -245,6 +244,7 @@ export class GameState {
                     this.wallDangerJoueur = true;
                 }
             }
+
             // Si la balle dépasse la DROITE (l'IA encaisse)
             if (this.ball.x + this.ball.radius >= canvas.width && this.ball.vx > 0) {
                 this.ball.x = canvas.width - this.ball.radius - 15;

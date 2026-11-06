@@ -3,7 +3,7 @@ export class CountdownView {
         this.canvasWidth = canvasWidth;
         this.canvasHeight = canvasHeight;
         this.difficulty = difficulty || 'Facile';
-        
+
         // Notre chrono interne de 5 secondes
         this.timer = 5.0;
         this.isFinished = false;
@@ -116,7 +116,7 @@ export class CountdownView {
                 ctx.lineTo(centerX + boxWidth / 2 + 10, hudY + boxHeight / 2 + 10);
                 ctx.lineTo(centerX + boxWidth / 2 + 10 - cornerSize, hudY + boxHeight / 2 + 10);
                 ctx.stroke();
-                
+
                 // Double crochet du bas qui bat lui aussi la mesure !
                 ctx.beginPath();
                 ctx.moveTo(centerX - boxWidth / 2 - pulseOffset, hudY + boxHeight / 2 + pulseOffset - cornerSize);
@@ -144,11 +144,10 @@ export class CountdownView {
             const isWarningText = isHard || isHardcore;
             ctx.fillStyle = isWarningText ? '#ff0033' : '#ffffff';
             ctx.font = `bold italic ${Math.floor(this.canvasHeight * 0.035)}px 'Courier New', Courier, monospace`;
-            
+
             const txtMode = isWarningText ? `MODE: ${this.difficulty.toUpperCase()}` : `MODE: ${this.difficulty}`;
             ctx.fillText(txtMode, centerX, hudY + 20);
         }
-
 
         // ==========================================
         // PHASE 2 : LE DECOMPTE PULSATION (De 3.0s à 0.0s)
@@ -168,7 +167,7 @@ export class CountdownView {
             ctx.lineWidth = 4;
             ctx.shadowBlur = 20;
             ctx.shadowColor = '#ff6600';
-            
+
             const radius = Math.floor(this.canvasHeight * 0.08) * scaleFactor;
 
             ctx.beginPath();
@@ -188,7 +187,7 @@ export class CountdownView {
             ctx.shadowColor = '#ffffff';
             ctx.font = `bold ${dynamicFontSize}px 'Courier New', Courier, monospace`;
             ctx.fillText(currentSecond, centerX, hudY); // Affiché sur hudY
-            
+
             ctx.restore();
         }
 
@@ -197,7 +196,7 @@ export class CountdownView {
         // ==========================================
         else {
             const alpha = 1.0 - (Math.abs(this.timer) / 0.5); 
-            
+
             ctx.save();
             ctx.globalAlpha = Math.max(0, alpha);
             ctx.textAlign = 'center';
@@ -207,7 +206,7 @@ export class CountdownView {
             ctx.font = `bold italic ${Math.floor(this.canvasHeight * 0.1)}px 'Courier New', Courier, monospace`;
             ctx.shadowBlur = 30;
             ctx.shadowColor = '#00ff66';
-            
+
             // Le FIGHT reste plein centre (centerY) car c'est le signal d'action global !
             ctx.fillText("FIGHT !", centerX, centerY); 
             ctx.restore();
