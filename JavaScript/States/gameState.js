@@ -37,13 +37,13 @@ export class GameState {
         this.aiTargetPos = undefined;
 
         // 1. Détermination de la clé en minuscules
-        const diffKey = (this.stateManager.currentDifficulty || 'Moyen').toLowerCase();
+        const diffKey = (this.stateManager.currentDifficulty || 'Facile').toLowerCase();
 
         // 2. Chargement de la configuration de l'IA
         try {
             const response = await fetch('Data/aiConfig.json');
             const config = await response.json();
-            const aiSettings = config[diffKey] || config['moyen'];
+            const aiSettings = config[diffKey] || config['facile'];
 
             this.aiSpeed = aiSettings.speed;
             this.aiReactionInterval = aiSettings.reactionTime; 

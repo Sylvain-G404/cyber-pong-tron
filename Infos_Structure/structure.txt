@@ -1,41 +1,25 @@
 ﻿C:.\cyber-pong-tron
-|   .gitignore
-|   generate_structure_V2.bat
-|   human.txt
-|   index.html
-|   README.md
-+---Assets
-|   +---Favicon
-|   |   |   Favicon.K.sf.blanc.png
-|   |   \---Favicon.K.sf.png
-|   \---Son
-|       \---menu_theme.mp3
-+---Data
-|   \---aiConfig.json
-+---Infos_Structure
-+---JavaScript
-|   |   main.js
-|   +---Engine
-|   |   |   gameLoop.js
-|   |   |   input.js
-|   |   |   network.js
-|   |   \---sound.js
-|   +---Entities
-|   |   |   ball.js
-|   |   |   board.js
-|   |   \---paddle.js
-|   \---States
-|       |   creditsState.js
-|       |   endState.js
-|       |   gameState.js
-|       |   menuState.js
-|       |   optionsState.js
-|       \---stateManager.js
-+---Screen_Site
-|   |   Screenshot 2026-11-01 at 17-35-25 cyber-pong-tron_Menu.png
-|   |   Screenshot 2026-11-01 at 17-35-34 cyber-pong-tron_Depart.png
-|   |   Screenshot 2026-11-01 at 17-37-06 cyber-pong-tron_Winner.png
-|   |   Screenshot 2026-11-01 at 17-37-20 cyber-pong-tron_Avantage.png
-|   \---Screenshot 2026-11-01 at 17-37-29 cyber-pong-tron_GameOvers.png
-\---Style
-    \---style.css
++--- index.html
++--- Data
+|   \--- aiConfig.json
++--- JavaScript
+|   +--- main.js
+|   +--- Engine
+|   |   +--- gameLoop.js
+|   |   +--- input.js
+|   |   +--- network.js
+|   |   \--- sound.js
+|   +--- Entities
+|   |   +--- ball.js
+|   |   +--- board.js
+|   |   +--- countdownView.js
+|   |   \--- paddle.js
+|   \--- States
+|       +--- creditsState.js
+|       +--- endState.js
+|       +--- gameState.js
+|       +--- menuState.js
+|       +--- optionsState.js
+|       \--- stateManager.js
+\--- Style
+    \--- style.css
