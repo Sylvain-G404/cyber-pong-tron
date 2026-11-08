@@ -1,5 +1,15 @@
 ﻿C:.\cyber-pong-tron
 +--- index.html
++--- Assets
+|   \--- Son
+|       +--- defeat_eazy.mp3
+|       +--- defeat_hard.mp3
+|       +--- defeat_hardcore.mp3
+|       +--- game_theme.mp3
+|       +--- menu_theme.mp3
+|       +--- victory_eazy.mp3
+|       +--- victory_hard.mp3
+|       \--- victory_hardcore.mp3
 +--- Data
 |   \--- aiConfig.json
 +--- JavaScript
