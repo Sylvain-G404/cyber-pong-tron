@@ -6,7 +6,7 @@ export class Input {
         // On écoute quand le joueur appuie sur une touche
         window.addEventListener('keydown', (e) => {
             // Sécurité pour éviter que la barre ESPACE ou les flèches fassent défiler la page web
-            if (["Space", "ArrowUp", "ArrowDown", "KeyW", "KeyS", "Backspace"].includes(e.code)) {
+            if (["Space", "ArrowUp", "ArrowDown", "KeyW", "KeyS", "Backspace", "Tab"].includes(e.code)) {
                 e.preventDefault();
             }
             this.keys[e.code] = true;
@@ -45,7 +45,7 @@ export class Input {
 
     // Renvoie true si la touche pressée correspond à "RETOUR / QUITTER"
     getMenuCancel(event) {
-        return event.code === 'Space' || event.code === 'Backspace';
+        return event.code === 'Space' || event.code === 'Tab';
     }
 }
 
@@ -56,5 +56,5 @@ export const MenuControls = {
     isUp: (event) => event.code === 'ArrowUp' || event.code === 'KeyW',
     isDown: (event) => event.code === 'ArrowDown' || event.code === 'KeyS',
     isAction: (event) => event.code === 'Enter' || event.code === 'Space',
-    isCancel: (event) => event.code === 'Space' || event.code === 'Backspace'
+    isCancel: (event) => event.code === 'Space' || event.code === 'Tab'
 };

@@ -30,6 +30,11 @@
 |       +--- gameState.js
 |       +--- menuState.js
 |       +--- optionsState.js
-|       \--- stateManager.js
+|       +--- stateManager.js
+|       \--- OptionsViews
+|           +--- colorView.js
+|           +--- difficultyView.js
+|           +--- sideView.js
+|           \--- volumeView.js
 \--- Style
     \--- style.css

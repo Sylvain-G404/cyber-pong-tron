@@ -104,3 +104,44 @@ Cette mise à jour marque le passage du prototype vers une architecture de produ
 - **UX Centralisée :** Harmonisation des menus (Écran Titre, Options, Écran de Fin) fonctionnant tous avec un système interactif de flèches du clavier (`selectedIndex`), d'écouteurs isolés et de retours sonores rétro dédiés.
 
 ---
+
+### ⚡ NOUVEAUTÉ : Version 2.5 — L'Architecture AAA Centrale & Customisation (Active)
+
+Cette mise à jour marque l'indépendance totale du moteur graphique et audio par rapport aux configurations rigides. L'expérience utilisateur (UX) et la flexibilité du code ont été poussées aux standards des studios professionnels (Clean Code & DRY).
+
+#### 🛠️ Le Journal des Modifications (Changelog V2.5)
+
+### 📂 Focus sur la Nouvelle Structure des Options
+
+L'architecture à double volet a nécessité la création d'un dossier dédié aux composants de réglages, garantissant un fichier `optionsState.js` ultra-léger (Responsabilité Unique) :
+
+```text
+cyber-pong-tron/
+└── JavaScript/
+    ├── Engine/
+    │   └── sound.js             # 🎛️ Moteur Audio centralisé avec Master Volume dynamique
+    └── States/
+        ├── optionsState.js      # 🎭 Le Chef d'orchestre (Gère la navigation de la colonne de gauche)
+        └── OptionsViews/        # 📦 DOSSIER COMPOSANTS : Gestion exclusive du volet de droite
+            ├── colorView.js     # 🎨 Palette cosmétique autonome (CYBER_PALETTE) & défilement Q/D
+            ├── difficultyView.js# 📈 Sélecteur adaptatif des 4 modes (Facile -> Hardcore)
+            ├── sideView.js      # ↔️ Checkbox de positionnement joueur (Inversion de gameplay Gauche/Droite)
+            └── volumeView.js    # 🔊 Rendu des jauges de son textuelles [■■■■□□□□□□] à paliers de 5%
+```
+
+##### 1. Refactoring Cosmétique & Palette Isolée (Clean Architecture)
+
+- **Base de Données Cosmétique :** Extraction complète des données de style de la classe d'affichage. Les thèmes graphiques sont désormais centralisés dans une constante globale statique (`CYBER_PALETTE`) facile à enrichir.
+- **Ajout de Teintes Cyber-Rétro :** Intégration immédiate des nouvelles couleurs de combat : **ROUGE ALERTE** (`#ff0000`) et **ORANGE VAPOR** (`#ff5500`).
+- **Rendu Dynamique de l'Arène :** Suppression totale des bordures rigides dans le fichier `style.css`. C'est désormais la classe `Board` (Le terrain) qui dessine son propre encadrement néon 2D et sa grille avec un effet de halo lumineux (_Bloom/Shadow_) synchronisé sur la couleur sélectionnée par le joueur.
+
+##### 2. Centralisation Audio Intégrale (Anti-Spaghetti Volume)
+
+- **Master Volume Système :** Éradication complète des modificateurs de volume (`.volume`) éparpillés dans le code. Le moteur audio (`sound.js`) intègre désormais un multiplicateur global (`masterVolume`) qui pilote à la racine l'intensité de l'API Web Audio et des fichiers MP3.
+- **Ajustement en Temps Réel :** Les bips de touches, les alarmes dynamiques de danger ("battement de cœur") et les pistes de fond s'adaptent instantanément à la volée dès que le joueur modifie sa jauge dans les options.
+
+##### 3. Ergonomie & Menu à Double Volet AAA
+
+- **Inversion Dynamique du Gameplay :** Le sélecteur de côté de jeu est 100% opérationnel. Le fichier `gameState.js` adapte à la volée les écouteurs du clavier (`Input`), les alarmes de danger et le script d'intelligence artificielle (`updateAI`) selon que le joueur choisit le côté GAUCHE ou DROITE.
+- **Navigation Fluide (UX Retravaillée) :** Intégration de la touche `TAB` (Tabulation) comme commande de retour/annulation universelle universellement accessible sous la main gauche, évitant les conflits d'écrans avec la touche `ÉCHAP` sur la plateforme Itch.io.
+- **Persistance des Choix :** Sauvegarde immédiate et en temps réel de tous les réglages cosmétiques et physiques à l'intérieur du `StateManager` global du jeu pour une persistance parfaite entre les écrans.

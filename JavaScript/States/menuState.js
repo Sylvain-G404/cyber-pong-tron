@@ -93,8 +93,8 @@ export class MenuState {
         // ==========================================
         ctx.save();
 
-        // Calcul de la taille de police proportionnelle (2.5% de la hauteur)
-        const helpSize = Math.floor(ctx.canvas.height * 0.025); 
+        // Calcul de la taille de police proportionnelle (3% de la hauteur)
+        const helpSize = Math.floor(ctx.canvas.height * 0.03); 
         ctx.font = helpSize + "px 'Courier New', Courier, monospace";
         ctx.textAlign = "center";
 

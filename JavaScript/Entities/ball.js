@@ -100,27 +100,36 @@ export class Ball {
     }
 
 
-    // Dessin de la traînée puis de la balle principale
-    render(ctx) {
-        // 1. DESSIN DE LA TRAÎNÉE DE LA MOTO TRON
+    // Dessin de la traînée puis de la balle principale avec couleur dynamique
+    render(ctx, stateManager) {
+        // Extraction de la couleur de la balle depuis le manager (Blanc pur de secours)
+        const ballColor = (stateManager && stateManager.colors) ? stateManager.colors.ball : "#ffffff";
+
+        // Convertit la couleur HEX en RGBA pour gérer la transparence de la traînée de manière propre
+        // Exemple : "#ffffff" devient "rgba(255, 255, 255, ...)"
+        ctx.save();
+        
+        // 1. DESSIN DE LA TRAÎNÉE DE LA MOTO TRON DYNAMIQUE
         for (let i = 0; i < this.history.length; i++) {
             let pos = this.history[i];
             let ratio = i / this.history.length;
-            
-            ctx.fillStyle = `rgba(255, 102, 0, ${ratio * 0.4})`; 
+
+            ctx.fillStyle = ballColor;
+            ctx.globalAlpha = ratio * 0.35; // Opacité progressive adaptative AAA
             let currentRadius = this.radius * ratio; 
 
             ctx.beginPath();
             ctx.arc(pos.x, pos.y, currentRadius, 0, Math.PI * 2);
             ctx.fill();
         }
+        ctx.restore();
 
         // 2. DESSIN DE LA BALLE PRINCIPALE
-        ctx.fillStyle = this.color;
+        ctx.fillStyle = ballColor;
 
-        // Effet de halo néon puissant
+        // Effet de halo néon puissant basé sur ta couleur choisie !
         ctx.shadowBlur = 15;
-        ctx.shadowColor = this.color;
+        ctx.shadowColor = ballColor;
 
         ctx.beginPath();
         ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
@@ -128,4 +137,5 @@ export class Ball {
 
         ctx.shadowBlur = 0; // On coupe proprement l'effet d'ombre
     }
+
 }

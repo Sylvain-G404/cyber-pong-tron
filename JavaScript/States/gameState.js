@@ -84,66 +84,29 @@ export class GameState {
 
     update(deltaTime) {
         const canvas = this.stateManager.canvas;
+        const playerSide = this.stateManager.playerSide || 'left'; // 'left' par défaut
 
-        // 1. Mise à jour de la raquette Joueur (Gauche)
+        // --- 1 & 2. CONTRÔLES DYNAMIQUES JOUEUR ET PILOTAGE AUTOMATIQUE IA ---
+        
+        // La raquette GAUCHE est-elle le joueur ou l'IA ?
         if (this.paddleLeftOrTop) {
-            this.paddleLeftOrTop.update(deltaTime, this.input, canvas.width, canvas.height);
+            if (playerSide === 'left') {
+                // Mode classique : Le joueur contrôle la raquette gauche
+                this.paddleLeftOrTop.update(deltaTime, this.input, canvas.width, canvas.height);
+            } else {
+                // Mode inversé : C'est l'IA qui pilote la raquette gauche !
+                this.updateAI(this.paddleLeftOrTop, deltaTime, canvas);
+            }
         }
 
-        // 2. LE PILOTAGE AUTOMATIQUE DE L'IA ADAPTATIF UNIVERSEL (PC/PAYSAGE)
-        if (this.paddleRightOrBottom && this.ball) {
-            if (!this.aiReactionTimer) this.aiReactionTimer = 0;
-            this.aiReactionTimer += deltaTime;
-
-            // Si le temps de réaction est écoulé, l'IA recalcule son alignement
-            if (this.aiReactionTimer >= this.aiReactionInterval) {
-                this.aiReactionTimer = 0; 
-
-                if (this.aiMalice && this.paddleLeftOrTop) {
-                    // --- LOGIQUE HARDCORE MALICIEUSE ---
-                    // L'IA n'ajuste sa visée agressive que si la balle vient vers elle
-                    if (this.ball.vx > 0) {
-                        const playerCenter = this.paddleLeftOrTop.y + this.paddleLeftOrTop.height / 2;
-                        const aiHeight = this.paddleRightOrBottom.height;
-                        const targetOffset = aiHeight * 0.42; 
-
-                        // Si le joueur est en haut (Y petit)
-                        if (playerCenter < canvas.height / 2) {
-                            // L'IA veut envoyer la balle vers le bas -> elle frappe avec son BAS
-                            // Aligner le bas de la raquette avec la balle : Y_raquette_centre doit être plus haut que Y_balle
-                            this.aiTargetPos = this.ball.y - targetOffset;
-                        } else {
-                            // Le joueur est en bas -> l'IA veut envoyer vers le haut -> elle frappe avec son HAUT
-                            this.aiTargetPos = this.ball.y + targetOffset;
-                        }
-                    } else {
-                        // Si la balle s'éloigne, l'IA se replace tranquillement au centre de l'écran ou suit le Y de base
-                        this.aiTargetPos = this.ball.y;
-                    }
-                } else {
-                    // --- LOGIQUE CLASSIQUE (FACILE / MOYEN / DIFFICILE) ---
-                    const error = (Math.random() - 0.5) * 2 * this.aiErrorMargin;
-                    this.aiTargetPos = this.ball.y + error; 
-                }
-            }
-
-            if (this.aiTargetPos === undefined) {
-                this.aiTargetPos = this.ball.y;
-            }
-
-            // Déplacement fluide de la raquette IA vers l'objectif Y (Inchangé)
-            let paddleCenter = this.paddleRightOrBottom.y + this.paddleRightOrBottom.height / 2;
-
-            if (this.aiTargetPos < paddleCenter - 5) {
-                this.paddleRightOrBottom.y -= this.aiSpeed * deltaTime;
-            } else if (this.aiTargetPos > paddleCenter + 5) {
-                this.paddleRightOrBottom.y += this.aiSpeed * deltaTime;
-            }
-
-            // Sécurité des bords d'arène pour l'IA (Inchangé)
-            if (this.paddleRightOrBottom.y < 0) this.paddleRightOrBottom.y = 0;
-            if (this.paddleRightOrBottom.y + this.paddleRightOrBottom.height > canvas.height) {
-                this.paddleRightOrBottom.y = canvas.height - this.paddleRightOrBottom.height;
+        // La raquette DROITE est-elle le joueur ou l'IA ?
+        if (this.paddleRightOrBottom) {
+            if (playerSide === 'right') {
+                // Mode inversé : Le joueur contrôle la raquette droite
+                this.paddleRightOrBottom.update(deltaTime, this.input, canvas.width, canvas.height);
+            } else {
+                // Mode classique : C'est l'IA qui pilote la raquette droite
+                this.updateAI(this.paddleRightOrBottom, deltaTime, canvas);
             }
         }
 
@@ -266,11 +229,11 @@ export class GameState {
             }
         }
 
-        // --- GESTION AUDIO DE L'ALARME DE DANGER DYNAMIQUE ---
-        if (this.wallDangerJoueur) {
-            startDangerAlarm('joueur');
-        } else if (this.wallDangerIA) {
-            startDangerAlarm('ia');
+        // --- GESTION AUDIO DE L'ALARME DE DANGER DYNAMIQUE (AAA) ---
+        if ((playerSide === 'left' && this.wallDangerJoueur) || (playerSide === 'right' && this.wallDangerIA)) {
+            startDangerAlarm('joueur'); // Le joueur est au bord de l'élimination !
+        } else if ((playerSide === 'left' && this.wallDangerIA) || (playerSide === 'right' && this.wallDangerJoueur)) {
+            startDangerAlarm('ia');     // L'IA est sous pression
         } else {
             stopDangerAlarm();
         }
@@ -278,7 +241,7 @@ export class GameState {
 
     draw(ctx, canvas) {
         // 1. Dessin de l'arrière-plan du terrain
-        if (this.board) this.board.render(ctx);
+        if (this.board) this.board.render(ctx, this.stateManager);
 
         // 2. Affichage néon rouge des murs de danger (Géré à 100% sur les côtés gauche/droite)
         ctx.fillStyle = "rgba(255, 0, 0, 0.4)";
@@ -291,9 +254,9 @@ export class GameState {
         ctx.shadowBlur = 0; 
 
         // 3. Dessin des entités (Raquettes et balle)
-        if (this.paddleLeftOrTop) this.paddleLeftOrTop.render(ctx);
-        if (this.paddleRightOrBottom) this.paddleRightOrBottom.render(ctx);
-        if (this.ball) this.ball.render(ctx);
+        if (this.paddleLeftOrTop) this.paddleLeftOrTop.render(ctx, this.stateManager);
+        if (this.paddleRightOrBottom) this.paddleRightOrBottom.render(ctx, this.stateManager);
+        if (this.ball) this.ball.render(ctx, this.stateManager);
 
         // 4. Dessin de l'animation de démarrage cyberpunk
         if (this.countdownAnimation && !this.countdownAnimation.isFinished) {
@@ -314,5 +277,60 @@ export class GameState {
         this.wallDangerIA = false;
         stopDangerAlarm();
         stopAmbientMusic();
+    }
+
+    // ========================================================
+    // SCRIPT IA CENTRALISÉ ET UNIVERSEL (POUR N'IMPORTE QUELLE RAQUETTE)
+    // ========================================================
+    updateAI(paddle, deltaTime, canvas) {
+        if (!this.aiReactionTimer) this.aiReactionTimer = 0;
+        this.aiReactionTimer += deltaTime;
+
+        if (this.aiReactionTimer >= this.aiReactionInterval) {
+            this.aiReactionTimer = 0; 
+
+            // Détection du côté opposé pour la malice hardcore
+            const opponentPaddle = (paddle.type === 'right') ? this.paddleLeftOrTop : this.paddleRightOrBottom;
+
+            if (this.aiMalice && opponentPaddle) {
+                // Logique agressive selon la direction de la balle
+                const ballMovingTowardsAI = (paddle.type === 'right' && this.ball.vx > 0) || (paddle.type === 'left' && this.ball.vx < 0);
+                
+                if (ballMovingTowardsAI) {
+                    const opponentCenter = opponentPaddle.y + opponentPaddle.height / 2;
+                    const aiHeight = paddle.height;
+                    const targetOffset = aiHeight * 0.42; 
+
+                    if (opponentCenter < canvas.height / 2) {
+                        this.aiTargetPos = this.ball.y - targetOffset;
+                    } else {
+                        this.aiTargetPos = this.ball.y + targetOffset;
+                    }
+                } else {
+                    this.aiTargetPos = this.ball.y;
+                }
+            } else {
+                const error = (Math.random() - 0.5) * 2 * this.aiErrorMargin;
+                this.aiTargetPos = this.ball.y + error; 
+            }
+        }
+
+        if (this.aiTargetPos === undefined) {
+            this.aiTargetPos = this.ball.y;
+        }
+
+        let paddleCenter = paddle.y + paddle.height / 2;
+
+        if (this.aiTargetPos < paddleCenter - 5) {
+            paddle.y -= this.aiSpeed * deltaTime;
+        } else if (this.aiTargetPos > paddleCenter + 5) {
+            paddle.y += this.aiSpeed * deltaTime;
+        }
+
+        // Sécurité des bords d'arène pour la raquette IA
+        if (paddle.y < 0) paddle.y = 0;
+        if (paddle.y + paddle.height > canvas.height) {
+            paddle.y = canvas.height - paddle.height;
+        }
     }
 }

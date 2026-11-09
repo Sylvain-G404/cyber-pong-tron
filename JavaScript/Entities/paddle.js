@@ -21,15 +21,14 @@ export class Paddle {
     update(deltaTime, input, canvasWidth, canvasHeight) {
         // --- MOUVEMENTS VERTICAUX UNIVERSELS AZERTY/QWERTY ---
         if (this.type === 'left') {
-            // Le joueur gauche peut utiliser Z/W OU la flèche du haut !
             if (input.isPressed('KeyW') || input.isPressed('ArrowUp')) this.y -= this.speed * deltaTime;
-            // Le joueur gauche peut utiliser S OU la flèche du bas !
             if (input.isPressed('KeyS') || input.isPressed('ArrowDown')) this.y += this.speed * deltaTime;
         }
 
         if (this.type === 'right') {
-            if (input.isPressed('ArrowUp')) this.y -= this.speed * deltaTime;
-            if (input.isPressed('ArrowDown')) this.y += this.speed * deltaTime;
+            // CORRECTION AAA : Le joueur droit peut AUSSI utiliser son clavier Z-W / S ou les flèches !
+            if (input.isPressed('KeyW') || input.isPressed('ArrowUp')) this.y -= this.speed * deltaTime;
+            if (input.isPressed('KeyS') || input.isPressed('ArrowDown')) this.y += this.speed * deltaTime;
         }
 
         // Sécurité commune pour bloquer la raquette dans l'arène
@@ -37,11 +36,25 @@ export class Paddle {
         if (this.y + this.height > canvasHeight) this.y = canvasHeight - this.height;
     }
 
-    render(ctx) {
-        ctx.fillStyle = this.color;
 
+    render(ctx, stateManager) {
+        // --- EXTRACTION DE LA COULEUR DYNAMIQUE ---
+        let paddleColor = this.color; // Couleur de secours
+        
+        if (stateManager && stateManager.colors) {
+            const playerSide = stateManager.playerSide || 'left';
+            
+            // Si le côté de la raquette correspond au choix du joueur -> Couleur Joueur, sinon Couleur Adversaire IA !
+            if (this.type === playerSide) {
+                paddleColor = stateManager.colors.player;
+            } else {
+                paddleColor = stateManager.colors.opponent;
+            }
+        }
+
+        ctx.fillStyle = paddleColor;
         ctx.shadowBlur = 10;
-        ctx.shadowColor = this.color;
+        ctx.shadowColor = paddleColor;
 
         // --- ARRONDI ADAPTATIF ---
         const borderRadius = Math.floor(this.height * 0.0625); 
@@ -52,4 +65,5 @@ export class Paddle {
 
         ctx.shadowBlur = 0;
     }
+
 }
