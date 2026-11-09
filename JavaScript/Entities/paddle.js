@@ -19,10 +19,12 @@ export class Paddle {
     }
 
     update(deltaTime, input, canvasWidth, canvasHeight) {
-        // --- MOUVEMENTS UNIQUEMENT VERTICAUX (SUR Y) ---
+        // --- MOUVEMENTS VERTICAUX UNIVERSELS AZERTY/QWERTY ---
         if (this.type === 'left') {
-            if (input.isPressed('KeyW')) this.y -= this.speed * deltaTime;
-            if (input.isPressed('KeyS')) this.y += this.speed * deltaTime;
+            // Le joueur gauche peut utiliser Z/W OU la flèche du haut !
+            if (input.isPressed('KeyW') || input.isPressed('ArrowUp')) this.y -= this.speed * deltaTime;
+            // Le joueur gauche peut utiliser S OU la flèche du bas !
+            if (input.isPressed('KeyS') || input.isPressed('ArrowDown')) this.y += this.speed * deltaTime;
         }
 
         if (this.type === 'right') {

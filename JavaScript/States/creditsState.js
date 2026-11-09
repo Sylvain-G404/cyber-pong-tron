@@ -16,7 +16,9 @@ export class CreditsState {
     }
 
     handleKeyDown(event) {
-        if (event.key === 'Escape' || event.key === 'Backspace') {
+        // On écoute directement l'événement clavier
+        // Espace (Space) ou Retour (Backspace) pour quitter sans conflit Itch.io !
+        if (event.code === 'Space' || event.code === 'Backspace') {
             playBeep(400, 0.05);
             this.stateManager.changeState('menu'); // Retour au menu principal
         }
@@ -85,6 +87,6 @@ export class CreditsState {
         // 6. Message d'aide de navigation en bas
         ctx.fillStyle = '#336677';
         ctx.font = `${helpSize}px 'Courier New', Courier, monospace`;
-        ctx.fillText('Appuyez sur ÉCHAP pour revenir au menu', canvas.width / 2, canvas.height - (canvas.height * 0.05));
+        ctx.fillText('ENTRÉE pour valider - ESPACE / RETOUR pour quitter', canvas.width / 2, canvas.height - (canvas.height * 0.05));
     }
 }

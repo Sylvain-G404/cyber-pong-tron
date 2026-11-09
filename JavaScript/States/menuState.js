@@ -1,9 +1,11 @@
 import { startMenuMusic } from '../Engine/sound.js';
 import { playBeep } from '../Engine/sound.js'; // Pour le petit son de navigation
+import { MenuControls } from '../Engine/input.js';
 
 export class MenuState {
-    constructor(stateManager) {
+    constructor(stateManager, input) {
         this.stateManager = stateManager;
+        this.input = input;
 
         // Configuration du menu interactif
         this.options = ['Jouer', 'Options', 'Crédits'];
@@ -25,32 +27,15 @@ export class MenuState {
     }
 
     handleKeyDown(event) {
-        switch (event.key) {
-            case 'ArrowUp':
-            case 'z':
-            case 'Z':
-                // On monte dans le menu (avec sécurité pour ne pas dépasser le haut)
-                if (this.selectedIndex > 0) {
-                    this.selectedIndex--;
-                    playBeep(400, 0.05); // Petit bip de navigation mécanique
-                }
-                break;
-
-            case 'ArrowDown':
-            case 's':
-            case 'S':
-                // On descend dans le menu (avec sécurité pour ne pas dépasser le bas)
-                if (this.selectedIndex < this.options.length - 1) {
-                    this.selectedIndex++;
-                    playBeep(400, 0.05);
-                }
-                break;
-
-            case 'Enter':
-            case ' ':
-                playBeep(600, 0.08); // Bip de validation plus aigu
-                this.selectOption();
-                break;
+        if (MenuControls.isUp(event)) {
+            if (this.selectedIndex > 0) { this.selectedIndex--; playBeep(400, 0.05); }
+        } 
+        else if (MenuControls.isDown(event)) {
+            if (this.selectedIndex < this.options.length - 1) { this.selectedIndex++; playBeep(400, 0.05); }
+        } 
+        else if (MenuControls.isAction(event)) {
+            playBeep(600, 0.08);
+            this.selectOption();
         }
     }
 
@@ -122,8 +107,8 @@ export class MenuState {
 
         // Dessin du texte de contrôle
         ctx.fillText(
-            "[ Navigation ]  Haut : Z / ⬆  |  Bas : S / ⬇  |  Validation : Entrée / Espace", 
-            hudX, 
+            "[ Navigation ]  Haut : Z-W / ⬆  |  Bas : S / ⬇  |  Validation : Entrée / Espace",
+            hudX,
             hudY
         );
 

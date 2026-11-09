@@ -1,4 +1,5 @@
 import { playBeep } from '../Engine/sound.js';
+import { MenuControls } from '../Engine/input.js';
 
 export class OptionsState {
     constructor(stateManager, input) {
@@ -16,39 +17,21 @@ export class OptionsState {
     exit() { window.removeEventListener('keydown', this.handleKeyDown); }
 
     handleKeyDown(event) {
-        switch (event.key) {
-            case 'ArrowUp':
-            case 'z':
-            case 'Z':
-                if (this.selectedIndex > 0) {
-                    this.selectedIndex--;
-                    playBeep(400, 0.05); // Bip de navigation
-                }
-                break;
-
-            case 'ArrowDown':
-            case 's':
-            case 'S':
-                if (this.selectedIndex < this.difficulties.length - 1) {
-                    this.selectedIndex++;
-                    playBeep(400, 0.05); // Bip de navigation
-                }
-                break;
-
-            case 'Enter':
-            case ' ':
-                playBeep(600, 0.08); // Bip aigu de validation
-                
-                // On enregistre textuellement la difficulté dans notre manager global ('Facile', 'Moyen' ou 'Difficile')
-                this.stateManager.currentDifficulty = this.difficulties[this.selectedIndex];
-
-                this.stateManager.changeState('menu'); // Retour auto au menu
-                break;
-
-            case 'Escape':
-                playBeep(400, 0.05);
-                this.stateManager.changeState('menu'); // Retour sans valider
-                break;
+        if (MenuControls.isUp(event)) {
+            if (this.selectedIndex > 0) { this.selectedIndex--; playBeep(400, 0.05); }
+        }
+        else if (MenuControls.isDown(event)) {
+            // ICI : On utilise bien .difficulties pour cet écran précis !
+            if (this.selectedIndex < this.difficulties.length - 1) { this.selectedIndex++; playBeep(400, 0.05); }
+        }
+        else if (MenuControls.isAction(event)) {
+            playBeep(600, 0.08);
+            this.stateManager.currentDifficulty = this.difficulties[this.selectedIndex];
+            this.stateManager.changeState('menu');
+        }
+        else if (MenuControls.isCancel(event)) { // Prise en compte de la touche Espace/Retour
+            playBeep(400, 0.05);
+            this.stateManager.changeState('menu');
         }
     }
 
@@ -92,6 +75,6 @@ export class OptionsState {
         // 4. Petit message d'aide en bas
         ctx.fillStyle = '#336677';
         ctx.font = `${helpSize}px 'Courier New', Courier, monospace`;
-        ctx.fillText('ENTRÉE pour valider - ÉCHAP pour quitter', canvas.width / 2, canvas.height - (canvas.height * 0.06));
+        ctx.fillText('[ Navigation ]  Haut : Z-W / ⬆  |  Bas : S / ⬇  |  Validation : Entrée / Espace', canvas.width / 2, canvas.height - (canvas.height * 0.06));
     }
 }

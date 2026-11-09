@@ -1,5 +1,6 @@
 import { playBeep, stopAmbientMusic } from '../Engine/sound.js'; // Suppression des anciens imports de bips
 import { playEndSound } from '../Engine/sound.js'; // 🔊 Import de la gestion des MP3
+import { MenuControls } from '../Engine/input.js';
 
 export class EndState {
     constructor(stateManager, input) {
@@ -50,35 +51,20 @@ export class EndState {
     }
 
     handleKeyDown(event) {
-        switch (event.key) {
-            case 'ArrowUp':
-            case 'z':
-            case 'Z':
-                if (this.selectedIndex > 0) {
-                    this.selectedIndex--;
-                    playBeep(400, 0.05); // Petit bip mécanique
-                }
-                break;
-
-            case 'ArrowDown':
-            case 's':
-            case 'S':
-                if (this.selectedIndex < this.options.length - 1) {
-                    this.selectedIndex++;
-                    playBeep(400, 0.05);
-                }
-                break;
-
-            case 'Enter':
-            case ' ':
-                playBeep(600, 0.08); // Bip de validation
-                this.selectOption();
-                break;
-
-            case 'Escape':
-                playBeep(400, 0.05);
-                this.stateManager.changeState('menu'); // Raccourci Échap direct
-                break;
+        if (MenuControls.isUp(event)) {
+            if (this.selectedIndex > 0) { this.selectedIndex--; playBeep(400, 0.05); }
+        }
+        else if (MenuControls.isDown(event)) {
+            if (this.selectedIndex < this.options.length - 1) { this.selectedIndex++; playBeep(400, 0.05); }
+        }
+        else if (MenuControls.isAction(event)) {
+            playBeep(600, 0.08);
+            this.selectOption();
+        }
+        else if (MenuControls.isCancel(event)) {
+            playBeep(400, 0.05);
+            stopAmbientMusic();
+            this.stateManager.changeState('menu');
         }
     }
 
@@ -86,6 +72,9 @@ export class EndState {
         if (this.selectedIndex === 0) {
             this.stateManager.changeState('game'); // Relance le match
         } else if (this.selectedIndex === 1) {
+            // CORRECTION : On coupe tous les sons de fin avant de retourner au menu principal !
+            stopAmbientMusic(); 
+
             this.stateManager.changeState('menu'); // Retour écran titre
         }
     }
@@ -99,9 +88,9 @@ export class EndState {
         ctx.textBaseline = "middle";
 
         // --- CALCULS DE TAILLES TYPOGRAPHIQUES AUTOMATIQUES AAA ---
-        const titleSize = Math.floor(canvas.height * 0.075); 
-        const optionSize = Math.floor(canvas.height * 0.04);  
-        const spacing = Math.floor(canvas.height * 0.09);     
+        const titleSize = Math.floor(canvas.height * 0.075);
+        const optionSize = Math.floor(canvas.height * 0.04);
+        const spacing = Math.floor(canvas.height * 0.09);
 
         // Rendu du Titre avec effet de Halo néon
         if (this.result === 'victory') {
@@ -140,6 +129,7 @@ export class EndState {
 
     exit() {
         window.removeEventListener('keydown', this.handleKeyDown);
-        console.log("Fermeture de l'écran de fin");
+        stopAmbientMusic(); 
+        console.log("Fermeture de l'écran de fin et nettoyage audio OK");
     }
 }

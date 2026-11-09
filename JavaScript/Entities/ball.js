@@ -52,7 +52,7 @@ export class Ball {
         this.vy = dirY * this.currentSpeed;
     }
 
-    // Mise à jour de la position de la balle
+        // Mise à jour de la position de la balle
     update(deltaTime) {
         // Ajout de la position actuelle dans l'historique de la traînée
         this.history.push({ x: this.x, y: this.y });
@@ -69,13 +69,36 @@ export class Ball {
             this.y = this.radius;
             this.vy = Math.abs(this.vy);
             playBeep(450, 0.05); // Bip Mur Haut !
+
+            // --- LOGIQUE DU REBOND MUR : PÉNALITÉ DE 1% ---
+            this.currentSpeed *= 0.99;
+            if (this.currentSpeed < this.minSpeed) {
+                this.currentSpeed = this.minSpeed;
+            }
+            // APPLICATION PHYSIQUE : On applique la nouvelle vitesse aux vecteurs
+            const angle = Math.atan2(this.vy, this.vx);
+            this.vx = Math.cos(angle) * this.currentSpeed;
+            this.vy = Math.sin(angle) * this.currentSpeed;
         }
+
         if (this.y + this.radius > this.canvasHeight) {
             this.y = this.canvasHeight - this.radius;
             this.vy = -Math.abs(this.vy);
             playBeep(450, 0.05); // Bip Mur Bas !
+
+            // --- LOGIQUE DU REBOND MUR : PÉNALITÉ DE 1% ---
+            this.currentSpeed *= 0.99;
+            if (this.currentSpeed < this.minSpeed) {
+                this.currentSpeed = this.minSpeed;
+            }
+            // APPLICATION PHYSIQUE : On applique la nouvelle vitesse aux vecteurs
+            const angle = Math.atan2(this.vy, this.vx);
+            this.vx = Math.cos(angle) * this.currentSpeed;
+            this.vy = Math.sin(angle) * this.currentSpeed;
         }
+        console.log("Vitesse de la balle :", Math.round(this.currentSpeed), "px/s");
     }
+
 
     // Dessin de la traînée puis de la balle principale
     render(ctx) {
