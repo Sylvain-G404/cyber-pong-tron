@@ -189,8 +189,8 @@ export class GameState {
                 this.ball.x = this.paddleRightOrBottom.x - this.ball.radius;
             }
 
-            // --- CONDITIONS DE COMPTAGE DU SCORE (BUTS ENCAISSÉS) ---
-            // Si la balle dépasse la GAUCHE (Le joueur encaisse)
+            // --- CONDITIONS DE COMPTAGE DU SCORE (BUTS ENCAISSÉS - UNIVERSEL) ---
+            // Si la balle dépasse la GAUCHE
             if (this.ball.x - this.ball.radius <= 0 && this.ball.vx < 0) {
                 this.ball.x = this.ball.radius + 15;
                 this.ball.vx = Math.abs(this.ball.vx);
@@ -198,18 +198,33 @@ export class GameState {
                 playBeep(180, 0.2); 
                 stopDangerAlarm(); 
 
-                if (this.wallDangerIA) {
-                    this.wallDangerIA = false;
-                } else if (this.wallDangerJoueur) {
-                    console.log("%c💀 GAME OVER !", "color: #ff0000; font-weight: bold;");
-                    this.stateManager.states['end'].setResult('gameover');
-                    this.stateManager.changeState('end');
+                // Qui est à gauche ?
+                if (playerSide === 'left') {
+                    // C'est le JOUEUR qui prend le but
+                    if (this.wallDangerIA) {
+                        this.wallDangerIA = false;
+                    } else if (this.wallDangerJoueur) {
+                        console.log("%c💀 GAME OVER !", "color: #ff0000; font-weight: bold;");
+                        this.stateManager.states['end'].setResult('gameover');
+                        this.stateManager.changeState('end');
+                    } else {
+                        this.wallDangerJoueur = true;
+                    }
                 } else {
-                    this.wallDangerJoueur = true;
+                    // C'est l'IA qui prend le but
+                    if (this.wallDangerJoueur) {
+                        this.wallDangerJoueur = false;
+                    } else if (this.wallDangerIA) {
+                        console.log("%c🏆 VICTOIRE DU JOUEUR !", "color: #00ff00; font-weight: bold;");
+                        this.stateManager.states['end'].setResult('victory');
+                        this.stateManager.changeState('end');
+                    } else {
+                        this.wallDangerIA = true;
+                    }
                 }
             }
 
-            // Si la balle dépasse la DROITE (l'IA encaisse)
+            // Si la balle dépasse la DROITE
             if (this.ball.x + this.ball.radius >= canvas.width && this.ball.vx > 0) {
                 this.ball.x = canvas.width - this.ball.radius - 15;
                 this.ball.vx = -Math.abs(this.ball.vx);
@@ -217,14 +232,29 @@ export class GameState {
                 playBeep(180, 0.2); 
                 stopDangerAlarm(); 
 
-                if (this.wallDangerJoueur) {
-                    this.wallDangerJoueur = false;
-                } else if (this.wallDangerIA) {
-                    console.log("%c🏆 VICTOIRE DU JOUEUR !", "color: #00ff00; font-weight: bold;");
-                    this.stateManager.states['end'].setResult('victory');
-                    this.stateManager.changeState('end');
+                // Qui est à droite ?
+                if (playerSide === 'right') {
+                    // C'est le JOUEUR qui prend le but
+                    if (this.wallDangerIA) {
+                        this.wallDangerIA = false;
+                    } else if (this.wallDangerJoueur) {
+                        console.log("%c💀 GAME OVER !", "color: #ff0000; font-weight: bold;");
+                        this.stateManager.states['end'].setResult('gameover');
+                        this.stateManager.changeState('end');
+                    } else {
+                        this.wallDangerJoueur = true;
+                    }
                 } else {
-                    this.wallDangerIA = true;
+                    // C'est l'IA qui prend le but
+                    if (this.wallDangerJoueur) {
+                        this.wallDangerJoueur = false;
+                    } else if (this.wallDangerIA) {
+                        console.log("%c🏆 VICTOIRE DU JOUEUR !", "color: #00ff00; font-weight: bold;");
+                        this.stateManager.states['end'].setResult('victory');
+                        this.stateManager.changeState('end');
+                    } else {
+                        this.wallDangerIA = true;
+                    }
                 }
             }
         }
@@ -243,13 +273,24 @@ export class GameState {
         // 1. Dessin de l'arrière-plan du terrain
         if (this.board) this.board.render(ctx, this.stateManager);
 
-        // 2. Affichage néon rouge des murs de danger (Géré à 100% sur les côtés gauche/droite)
+        // EXTRACTION DU CÔTÉ JOUEUR POUR LA COHÉRENCE VISUELLE AAA
+        const playerSide = this.stateManager.playerSide || 'left';
+
+        // 2. Affichage néon rouge des murs de danger adaptatifs
         ctx.fillStyle = "rgba(255, 0, 0, 0.4)";
         ctx.shadowBlur = 20;
         ctx.shadowColor = "#ff0000";
 
-        if (this.wallDangerJoueur) ctx.fillRect(0, 0, 15, canvas.height); // Gauche rouge
-        if (this.wallDangerIA) ctx.fillRect(canvas.width - 15, 0, 15, canvas.height); // Droite rouge
+        // Si le joueur est à gauche : son mur est à gauche, celui de l'IA est à droite
+        if (playerSide === 'left') {
+            if (this.wallDangerJoueur) ctx.fillRect(0, 0, 15, canvas.height); // Ton alerte à gauche
+            if (this.wallDangerIA) ctx.fillRect(canvas.width - 15, 0, 15, canvas.height); // Alerte IA à droite
+        } 
+        // Si le joueur est à droite : son mur passe à droite, celui de l'IA passe à gauche !
+        else {
+            if (this.wallDangerJoueur) ctx.fillRect(canvas.width - 15, 0, 15, canvas.height); // Ton alerte à droite
+            if (this.wallDangerIA) ctx.fillRect(0, 0, 15, canvas.height); // Alerte IA à gauche
+        }
 
         ctx.shadowBlur = 0; 
 
@@ -263,6 +304,7 @@ export class GameState {
             this.countdownAnimation.draw(ctx);
         }
     }
+
 
     checkCollision(ball, paddle) {
         return ball.x + ball.radius > paddle.x &&
