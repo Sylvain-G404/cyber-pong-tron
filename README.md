@@ -48,14 +48,16 @@ cyber-pong-tron/
 
 ## 🚀 Roadmap (Évolutions à venir)
 
-### ⚙️ Phase 1 : Système de Paramètres Avancés
+### ⚙️ Phase 1 : Système de Paramètres Avancés (Validée & Opérationnelle)
 
-- **Sélecteur de Difficulté :**
+- [x] **Sélecteur de Difficulté Dynamique :**
   - **Facile :** Accélération à +3% par coup de raquette, vitesse de l'IA à 60% du joueur.
   - **Moyen :** Accélération standard à +5%, vitesse de l'IA à 75%.
-  - **Difficile :** Accélération hardcore à +10%, vitesse de l'IA à 95% (Style demi-dieu).
-- **Customisation Esthétique :** Menu permettant de choisir la couleur néon de sa raquette et de sa traînée d'énergie (Cyan, Rose, Vert acide, Jaune fluo).
-- **Gestion des Côtés :** Choix de son emplacement de départ sur la table de jeu (Gauche/Droite sur PC, Haut/Bas sur Mobile).
+  - **Difficile :** Vitesse de l'IA à 95% (Style demi-dieu).
+  - **Hardcore :** Le défi ultime pour les pilotes d'élite (Vitesse maximale et malice agressive activée).
+- [x] **Customisation Esthétique Néon (Palette Isolée) :** Menu à défilement horizontal permettant de changer instantanément la couleur de la raquette joueur, de la raquette adverse, de la comète d'énergie (avec sa traînée _Lightcycle_) et de l'encadrement lumineux de l'arène.
+- [x] **Gestion des Côtés & Inversion Logique :** Inversion complète et en temps réel des commandes physiques, des alarmes de danger critiques et du comportement autonome de l'IA selon le côté choisi (Gauche ou Droite).
+- [x] **Centralisation Audio (Master Volume) :** Contrôle absolu du gain à paliers de 5% géré de manière autonome par le moteur audio sur l'intégralité des bips système et des thèmes MP3.
 
 ### 🤝 Phase 2 : Révolution Multijoueur
 
@@ -145,3 +147,29 @@ cyber-pong-tron/
 - **Inversion Dynamique du Gameplay :** Le sélecteur de côté de jeu est 100% opérationnel. Le fichier `gameState.js` adapte à la volée les écouteurs du clavier (`Input`), les alarmes de danger et le script d'intelligence artificielle (`updateAI`) selon que le joueur choisit le côté GAUCHE ou DROITE.
 - **Navigation Fluide (UX Retravaillée) :** Intégration de la touche `TAB` (Tabulation) comme commande de retour/annulation universelle universellement accessible sous la main gauche, évitant les conflits d'écrans avec la touche `ÉCHAP` sur la plateforme Itch.io.
 - **Persistance des Choix :** Sauvegarde immédiate et en temps réel de tous les réglages cosmétiques et physiques à l'intérieur du `StateManager` global du jeu pour une persistance parfaite entre les écrans.
+
+---
+
+## 🚀 Prochaines Étapes : En route vers la Version 3.0
+
+La Phase 1 étant close avec brio, le développement se tourne vers le gameplay pur, le chaos visuel et l'introduction de mécaniques physiques inédites.
+
+### 🎱 Phase 3 : L'Ère Multi-Balles & Collision Cinétique
+
+- **Introduction de la "Balle de la Mort" :**
+  - Apparition d'une seconde sphère d'énergie noire/rouge sur le terrain après un certain nombre d'échanges.
+  - Cette comète instable aura pour rôle de perturber le flux et de limiter indirectement la vitesse folle de la première balle.
+- **Physique de Collision "Effet Billard" :**
+  - Développement d'un moteur de collision cercle-contre-cercle (Calcul de la distance des centres et des vecteurs de masses).
+  - Lorsque la comète principale et la Balle de la Mort se percuteront, elles s'éjecteront mutuellement selon l'angle d'impact, créant des trajectoires totalement imprévisibles pour le joueur et l'IA !
+  - _...Vous en découvrirez plus dans la V3 ;)_
+
+### ✨ Effets Visuels & Polish Cyberpunk (AAA)
+
+- **Système de Particules Néon :** Génération de projections d'étincelles lumineuses aux couleurs de l'entité lors de chaque impact critique (Raquettes, Murs).
+- **Distorsion d'Écran (_Screen Shake_) :** Secousse dynamique du canvas lors d'un but encaissé ou d'un choc à haute vitesse pour renforcer l'impact.
+
+### 🤝 Phase 4 : Révolution Multijoueur (Local & P2P)
+
+- **Mode Face-à-Face Local :** Activation du second profil de touches pour jouer à deux sur le même clavier (Joueur 1 en Z-W/S, Joueur 2 avec les flèches directionnelles).
+- **Mode Réseau WebRTC :** Liaison Peer-to-Peer instantanée par simple scan de QR Code pour des duels à distance sans latence.
