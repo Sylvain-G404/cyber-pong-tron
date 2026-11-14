@@ -1,5 +1,5 @@
 import { startMenuMusic } from '../Engine/sound.js';
-import { playBeep } from '../Engine/sound.js'; // Pour le petit son de navigation
+import { playBeep } from '../Engine/sound.js';
 import { MenuControls } from '../Engine/input.js';
 
 export class MenuState {
@@ -8,8 +8,8 @@ export class MenuState {
         this.input = input;
 
         // Configuration du menu interactif
-        this.options = ['Jouer', 'Options', 'Crédits'];
-        this.selectedIndex = 0; // 0 = Jouer, 1 = Options, 2 = Crédits
+        this.options = ['Jouer', 'Options', 'Crédits', 'Portfolio'];
+        this.selectedIndex = 0; // 0 = Jouer, 1 = Options, 2 = Crédits, 3 = Portfolio
         
         // Liaison du contexte pour les événements clavier
         this.handleKeyDown = this.handleKeyDown.bind(this);
@@ -47,6 +47,8 @@ export class MenuState {
             this.stateManager.changeState('options');
         } else if (this.selectedIndex === 2) {
             this.stateManager.changeState('credits');
+        } else if (this.selectedIndex === 3) {
+            window.open('https://sylvain-g404.github.io/Mon-Portfolio-Temps/', '_blank', 'noopener,noreferrer');
         }
     }
 
@@ -62,31 +64,55 @@ export class MenuState {
         // --- CALCULS DE TAILLES TYPOGRAPHIQUES AUTOMATIQUES AAA ---
         const titleSize = Math.floor(canvas.height * 0.075); // 7.5% de la hauteur (Ex: 75px en résolution 1000)
         const optionSize = Math.floor(canvas.height * 0.04); // 4% de la hauteur (Ex: 40px en résolution 1000)
-        const spacing = Math.floor(canvas.height * 0.09);    // 9% d'espacement (Ex: 90px)
+        const spacing = Math.floor(canvas.height * 0.08);    // 8% d'espacement (Ex: 80px)
 
         // 2. Titre du jeu principal
         ctx.fillStyle = '#00f3ff';
         ctx.font = `bold ${titleSize}px 'Courier New', Courier, monospace`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText('CYBER PONG TRON', canvas.width / 2, canvas.height / 2 - (spacing * 1.2));
+        ctx.fillText('CYBER PONG TRON', canvas.width / 2, canvas.height / 2 - (spacing * 2.3));
 
         // 3. Rendu dynamique des options du menu
-        const startY = canvas.height / 2 + (spacing * 0.3);
+        const startY = canvas.height / 2 - (spacing * 0.5);
 
         this.options.forEach((option, index) => {
+            const isPortfolio = (option === 'Portfolio');
+            const yPos = startY + (index * spacing);
+
             if (index === this.selectedIndex) {
-                // Style Option Sélectionnée (Blanc brillant avec curseurs)
-                ctx.fillStyle = '#ffffff';
                 ctx.font = `bold ${optionSize}px 'Courier New', Courier, monospace`;
-                ctx.fillText(`> ${option} <`, canvas.width / 2, startY + (index * spacing));
+
+                if (isPortfolio) {
+                    // 1. Chevrons orange centrés uniquement autour du mot "Portfolio"
+                    ctx.fillStyle = '#ff8800';
+                    ctx.fillText(`> ${option} <`, canvas.width / 2, yPos);
+
+                    // 2. Mot "Portfolio" centré en blanc
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillText(option, canvas.width / 2, yPos);
+
+                    // 3. Flèche externe dessinée à droite sans décaler le centrage
+                    const fullWidth = ctx.measureText(`> ${option} <`).width;
+                    ctx.fillStyle = '#ff8800';
+                    ctx.fillText('↗', canvas.width / 2 + fullWidth / 2 + (optionSize * 0.9), yPos);
+                } else {
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillText(`> ${option} <`, canvas.width / 2, yPos);
+                }
             } else {
-                // Style Options Inactives (Cyan éteint/grisé)
-                ctx.fillStyle = '#558899';
+                // Style Options Inactives : le mot reste parfaitement centré
+                ctx.fillStyle = isPortfolio ? '#7799aa' : '#558899';
                 ctx.font = `${optionSize}px 'Courier New', Courier, monospace`;
-                ctx.fillText(option, canvas.width / 2, startY + (index * spacing));
+                ctx.fillText(option, canvas.width / 2, yPos);
+
+                if (isPortfolio) {
+                    const wordWidth = ctx.measureText(option).width;
+                    ctx.fillText('↗', canvas.width / 2 + wordWidth / 2 + 25, yPos);
+                }
             }
         });
+
 
         // ==========================================
         // HUD DISCRET : GUIDE DES COMMANDES (TUTO) ACCORDE AU DESIGN AAA
@@ -113,6 +139,5 @@ export class MenuState {
         );
 
         ctx.restore();
-
     }
 }
